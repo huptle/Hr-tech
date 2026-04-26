@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ──────────────────────────────────────────────────────────── */
+/* Palette:  #FFFFFF  #06BEE1  #1768AC  #2541B2  #03256C */
+
+:root {
+  /* Dark mode (default) */
+  --background: 220 80% 5%;          /* near-black navy */
+  --surface: 220 70% 8%;
+  --surface-2: 220 60% 12%;
+  --border: 220 40% 18%;
+  --border-subtle: 220 35% 13%;
+
+  --text-primary: 0 0% 100%;          /* #FFFFFF */
+  --text-secondary: 210 30% 75%;
+  --text-muted: 214 25% 50%;
+
+  --accent: 193 95% 45%;              /* #06BEE1 */
+  --accent-2: 212 75% 40%;            /* #1768AC */
+  --accent-deep: 226 70% 47%;         /* #2541B2 */
+  --accent-navy: 218 96% 22%;         /* #03256C */
+  --accent-glow: rgba(6, 190, 225, 0.18);
+
+  --success: 160 60% 45%;
+  --warning: 38 95% 64%;
+  --danger: 0 72% 51%;
+}
+
+[data-theme="light"] {
+  --background: 0 0% 97%;
+  --surface: 0 0% 100%;
+  --surface-2: 220 20% 94%;
+  --border: 220 20% 85%;
+  --border-subtle: 220 18% 90%;
+
+  --text-primary: 218 96% 22%;        /* #03256C */
+  --text-secondary: 212 75% 30%;      /* darker #1768AC tone */
+  --text-muted: 220 25% 50%;
+
+  --accent: 193 95% 35%;              /* #06BEE1 darkened for light bg */
+  --accent-2: 212 75% 40%;
+  --accent-deep: 226 70% 47%;
+  --accent-navy: 218 96% 22%;
+  --accent-glow: rgba(6, 190, 225, 0.12);
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-surface: hsl(var(--surface));
+  --color-surface-2: hsl(var(--surface-2));
+  --color-border: hsl(var(--border));
+  --color-border-subtle: hsl(var(--border-subtle));
+  --color-text-primary: hsl(var(--text-primary));
+  --color-text-secondary: hsl(var(--text-secondary));
+  --color-text-muted: hsl(var(--text-muted));
+  --color-accent: hsl(var(--accent));
+  --color-accent-2: hsl(var(--accent-2));
+  --color-accent-deep: hsl(var(--accent-deep));
+  --color-accent-navy: hsl(var(--accent-navy));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-danger: hsl(var(--danger));
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--text-primary));
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--surface)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-muted)); }
+
+/* ─── Utilities ──────────────────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+[data-theme="light"] .glass {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(6,190,225,0.12);
+}
+
+.glass-strong {
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+[data-theme="light"] .glass-strong {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(6,190,225,0.15);
+}
+
+/* Gradient uses the brand palette: #06BEE1 → #1768AC */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-2)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-2)));
+}
+
+.gradient-bg-deep {
+  background: linear-gradient(135deg, hsl(var(--accent-2)), hsl(var(--accent-deep)));
+}
+
+.glow {
+  box-shadow: 0 0 0 1px rgba(6,190,225,0.35), 0 4px 32px rgba(6,190,225,0.18);
+}
+
+.glow-sm {
+  box-shadow: 0 0 0 1px rgba(6,190,225,0.2), 0 2px 16px rgba(6,190,225,0.1);
+}
+
+/* ─── Input focus-visible ring ───────────────────────────────────────────────── */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--accent) / 0.35), 0 0 0 1px hsl(var(--accent));
+}
+
+/* ─── Mesh gradient background orbs ────────────────────────────────────────── */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.mesh-bg::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(6,190,225,0.10) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.mesh-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  right: -5%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(ellipse, rgba(37,65,178,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+[data-theme="light"] .mesh-bg::before {
+  background: radial-gradient(ellipse, rgba(6,190,225,0.06) 0%, transparent 70%);
+}
+
+[data-theme="light"] .mesh-bg::after {
+  background: radial-gradient(ellipse, rgba(37,65,178,0.04) 0%, transparent 70%);
+}

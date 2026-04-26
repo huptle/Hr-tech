@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id                   String              @id @default(cuid())
+  title                String
+  description          String              @default("")
+  screeningDurationMin Int                 @default(15)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  candidates           Candidate[]
+  questions            ScreeningQuestion[]
+  slots                InterviewSlot[]
+}
+
+model ScreeningQuestion {
+  id    String @id @default(cuid())
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  order Int
+  text  String
+}
+
+model Candidate {
+  id                     String          @id @default(cuid())
+  jobId                  String
+  job                    Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  name                   String
+  email                  String
+  phone                  String?
+  resumeNotes            String          @default("")
+  joiningAvailability    String          @default("")
+  resumeVerified         Boolean         @default(false)
+  status                 String          @default("imported")
+  rankScore              Float?
+  voiceTranscriptNotes   String          @default("")
+  /** Short manager-facing summary (Gemini). */
+  aiSummary              String          @default("")
+  /** JSON array: { "question": string, "answer": string }[] for async text screening. */
+  asyncScreeningAnswers  String          @default("")
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  bookedSlots            InterviewSlot[]
+}
+
+model InterviewSlot {
+  id          String     @id @default(cuid())
+  jobId       String
+  job         Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  startsAt    DateTime
+  endsAt      DateTime
+  mode        String     @default("hr")
+  candidateId String?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+}

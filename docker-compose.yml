@@ -1,0 +1,21 @@
+# Local: docker compose up --build
+# Server (CI): set DOCKER_IMAGE then docker compose pull && docker compose up -d
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE:-portal:local}
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: file:/data/dev.db
+    volumes:
+      - portal-db:/data
+    restart: unless-stopped
+
+volumes:
+  portal-db:
