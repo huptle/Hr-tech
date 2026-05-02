@@ -14,7 +14,6 @@ import {
   Breadcrumb,
   EmptyState,
   LinkBtnPrimary,
-  InitialAvatar,
 } from "@/components/ui/primitives";
 import { Star, Calendar, Trophy, CheckCircle2, Briefcase } from "lucide-react";
 

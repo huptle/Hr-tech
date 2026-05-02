@@ -4,27 +4,17 @@ import { runVoiceScreening } from "@/app/actions/screening";
 import { isGeminiConfigured } from "@/lib/gemini";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import {
-  Section,
-  PageHeader,
-  StaggerList,
-  StaggerItem,
-  ScoreBar,
-  FadeUp,
-} from "@/components/motion-wrappers";
+import { Section, PageHeader, ScoreBar } from "@/components/motion-wrappers";
 import { Badge } from "@/components/ui/badge";
 import {
   PageWrapper,
   PageLayout,
   SectionCard,
   SectionCardHeader,
-  FormField,
-  fieldInputClass,
   BtnPrimary,
   BtnDanger,
   LinkBtnSecondary,
   Breadcrumb,
-  EmptyState,
   InitialAvatar,
 } from "@/components/ui/primitives";
 import Link from "next/link";

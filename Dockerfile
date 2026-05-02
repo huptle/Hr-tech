@@ -9,6 +9,7 @@ RUN apt-get update -y \
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# postinstall runs prisma generate; schema is not copied yet — builder runs prisma generate.
 RUN npm ci --ignore-scripts
 
 FROM base AS builder

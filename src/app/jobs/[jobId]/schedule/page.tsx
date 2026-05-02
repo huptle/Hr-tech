@@ -8,7 +8,7 @@ import { isGeminiConfigured } from "@/lib/gemini";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PageHeader, Section, FadeUp } from "@/components/motion-wrappers";
+import { PageHeader, Section } from "@/components/motion-wrappers";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar, ArrowLeft, Plus, Star, Trash2,
