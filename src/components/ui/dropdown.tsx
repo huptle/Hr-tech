@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect, ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Dropdown({
   trigger,
   children,
-  align = "right",
+  align = "right"
 }: {
   trigger: ReactNode;
   children: ReactNode;
@@ -15,70 +16,46 @@ export function Dropdown({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function closeIfOutside(e: Event) {
-      const target = e.target;
-      if (!(target instanceof Node)) return;
-      if (ref.current && !ref.current.contains(target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
-    // pointerdown + capture: works for touch and runs before inner click handlers mis-fire
-    document.addEventListener("pointerdown", closeIfOutside, true);
-    return () => document.removeEventListener("pointerdown", closeIfOutside, true);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
     <div className="relative inline-block text-left" ref={ref}>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setIsOpen((o) => !o)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setIsOpen((o) => !o);
-          }
-        }}
-        className="flex cursor-pointer items-center justify-center"
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-      >
+      <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer flex items-center justify-center">
         {trigger}
       </div>
-      {isOpen && (
-        <div
-          className={`absolute z-[120] mt-2 min-w-[160px] overflow-hidden rounded-xl border border-border/40 bg-surface/95 shadow-xl backdrop-blur-md ${
-            align === "right" ? "right-0" : "left-0"
-          }`}
-          role="menu"
-        >
-          <div
-            className="flex flex-col py-1.5"
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className={`absolute ${align === "right" ? "right-0" : "left-0"} mt-2 min-w-[160px] rounded-xl border border-border/40 bg-surface/95 backdrop-blur-md shadow-xl z-50 overflow-hidden`}
             onClick={() => setIsOpen(false)}
           >
-            {children}
-          </div>
-        </div>
-      )}
+            <div className="py-1.5 flex flex-col">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-export function DropdownItem({
-  children,
-  className = "",
-  onClick,
-}: {
-  children: ReactNode;
-  className?: string;
-  onClick?: () => void;
-}) {
+export function DropdownItem({ children, className = "", onClick }: { children: ReactNode, className?: string, onClick?: () => void }) {
   return (
     <button
       type="button"
-      role="menuitem"
       onClick={onClick}
-      className={`flex w-full items-center gap-2.5 bg-transparent px-4 py-2 text-left text-sm font-medium text-text-secondary outline-none transition-colors hover:bg-accent/10 hover:text-text-primary ${className}`}
+      className={`px-4 py-2 bg-transparent text-left text-sm text-text-secondary hover:bg-accent/10 hover:text-text-primary transition-colors flex items-center gap-2.5 w-full outline-none font-medium ${className}`}
     >
       {children}
     </button>

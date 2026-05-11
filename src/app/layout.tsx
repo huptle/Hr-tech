@@ -36,8 +36,11 @@ function ThemeInitScript() {
       } catch(e) {}
     })();
   `;
+  // eslint-disable-next-line react/no-danger
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }
+
+import { Providers } from "@/Providers";
 
 export default function RootLayout({
   children,
@@ -54,8 +57,9 @@ export default function RootLayout({
         <ThemeInitScript />
       </head>
       <body className="flex min-h-full flex-col bg-background text-text-primary">
-        <AppNav />
-        <div className="flex-1">{children}</div>
+        <Providers>
+          <div className="flex-1">{children}</div>
+        </Providers>
       </body>
     </html>
   );

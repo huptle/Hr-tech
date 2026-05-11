@@ -2,16 +2,26 @@ import { createJob } from "@/app/actions/jobs";
 import { isGeminiConfigured } from "@/lib/gemini";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { FadeUp, Section, PageHeader } from "@/components/motion-wrappers";
+import {
+  AnimCard,
+  FadeUp,
+  Section,
+  PageHeader,
+} from "@/components/motion-wrappers";
 import { Badge } from "@/components/ui/badge";
 import {
   PageWrapper,
   PageLayout,
   SectionCard,
   SectionHeading,
+  BtnPrimary,
+  LinkBtnSecondary,
+  FormField,
+  fieldInputClass,
   EmptyState,
+  InitialAvatar,
 } from "@/components/ui/primitives";
-import { Briefcase, Clock } from "lucide-react";
+import { Briefcase, Plus, ChevronRight, Clock } from "lucide-react";
 import { CreateJobFormModal, JobRowActions } from "./components";
 
 export const dynamic = "force-dynamic";

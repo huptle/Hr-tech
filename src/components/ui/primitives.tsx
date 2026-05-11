@@ -150,12 +150,10 @@ export { fieldInputClass, fieldLabelClass };
 export function BtnPrimary({
   children,
   className,
-  type = "button",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      type={type}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/20 transition-all duration-200 hover:bg-accent/90 hover:shadow-accent/35 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40",
         className
@@ -170,12 +168,10 @@ export function BtnPrimary({
 export function BtnSecondary({
   children,
   className,
-  type = "button",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      type={type}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-xl glass border border-border/40 px-4 py-2 text-sm font-medium text-text-primary transition-all duration-200 hover:bg-accent/5 hover:border-accent/30",
         className
@@ -190,12 +186,10 @@ export function BtnSecondary({
 export function BtnDanger({
   children,
   className,
-  type = "button",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      type={type}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-xl border border-danger/25 bg-danger/8 px-3 py-1.5 text-xs font-medium text-red-400 transition-all duration-200 hover:bg-danger/18 hover:border-danger/40",
         className
