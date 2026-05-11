@@ -1,0 +1,131 @@
+# CI: lint, Next build, Docker image build (PR + push).
+# CD: push image to GHCR, SSH to Ubuntu host, pull image, docker compose up (main/master only).
+#
+# GitHub → Settings → Secrets and variables → Actions:
+#   VPS_HOST        — server IP or hostname
+#   VPS_USER        — SSH user
+#   VPS_SSH_KEY     — private key (full PEM)
+#   VPS_APP_PATH    — git clone path on server (contains docker-compose.yml)
+#   GHCR_USER       — GitHub username (for docker login on the VPS)
+#   GHCR_READ_TOKEN — GitHub PAT with read:packages (pull private images from GHCR)
+#
+# Repo → Settings → Actions → General → Workflow permissions:
+#   enable "Read and write permissions" (needed for GITHUB_TOKEN to push to GHCR),
+#   or use a PAT with write:packages as a secret instead of GITHUB_TOKEN for login.
+
+name: CI / Docker / Deploy
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        env:
+          DATABASE_URL: file:./dev.db
+        run: npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build container (verify Dockerfile)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: portal:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-and-push:
+    needs: ci
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    outputs:
+      docker_image: ${{ steps.meta.outputs.docker_image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image ref (GHCR is lowercase)
+        id: meta
+        run: |
+          lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "docker_image=ghcr.io/${lower}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "docker_image_latest=ghcr.io/${lower}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.docker_image }}
+            ${{ steps.meta.outputs.docker_image_latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.5
+        env:
+          VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          DOCKER_IMAGE: ${{ needs.build-and-push.outputs.docker_image }}
+          GHCR_USER: ${{ secrets.GHCR_USER }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: VPS_APP_PATH,DEPLOY_BRANCH,DOCKER_IMAGE,GHCR_USER,GHCR_READ_TOKEN
+          script: |
+            set -e
+            cd "$VPS_APP_PATH"
+            git fetch origin
+            git checkout "$DEPLOY_BRANCH"
+            git reset --hard "origin/$DEPLOY_BRANCH"
+            [ -f .env ] || touch .env
+            printf '%s' "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            export DOCKER_IMAGE
+            docker compose pull
+            docker compose up -d --no-build
