@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence, type HTMLMotionProps } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 // ─── Shared easing ────────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@ export function FadeUp({
 }) {
   return (
     <motion.div
-      initial={false}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease }}
       className={className}
@@ -62,7 +62,7 @@ export function StaggerItem({
   return (
     <motion.li
       variants={{
-        hidden: { opacity: 1, y: 14 },
+        hidden: { opacity: 0, y: 14 },
         show: { opacity: 1, y: 0, transition: { duration: 0.4, ease } },
       }}
       className={className}
@@ -107,7 +107,7 @@ export function AnimCard({
 }) {
   return (
     <motion.div
-      initial={false}
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease }}
       whileHover={{
@@ -169,7 +169,7 @@ export function PageHeader({
 }) {
   return (
     <motion.header
-      initial={false}
+      initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease }}
       className={className}
@@ -180,24 +180,24 @@ export function PageHeader({
 }
 
 // ─── Section reveal ────────────────────────────────────────────────────────────
-type SectionProps = Omit<
-  HTMLMotionProps<"section">,
-  "initial" | "animate" | "transition"
-> & { delay?: number };
-
 export function Section({
   children,
   className,
   delay = 0,
   ...rest
-}: SectionProps) {
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+  [key: string]: unknown;
+}) {
   return (
     <motion.section
-      initial={false}
+      initial={{ opacity: 0, y: 22 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay, ease }}
       className={className}
-      {...rest}
+      {...(rest as React.HTMLAttributes<HTMLElement>)}
     >
       {children}
     </motion.section>
@@ -217,7 +217,7 @@ export function PipelineStep({
   return (
     <motion.li
       variants={{
-        hidden: { opacity: 1, y: 14 },
+        hidden: { opacity: 0, y: 14 },
         show: { opacity: 1, y: 0, transition: { duration: 0.42, ease } },
       }}
       whileHover={{
@@ -248,7 +248,7 @@ export function AnimTableRow({
   return (
     <motion.tr
       variants={{
-        hidden: { opacity: 1, x: -8 },
+        hidden: { opacity: 0, x: -8 },
         show: { opacity: 1, x: 0, transition: { duration: 0.35, ease } },
       }}
       whileHover={{ backgroundColor: "rgba(6,190,225,0.03)" }}
@@ -267,15 +267,17 @@ export function ScoreBar({ score }: { score: number }) {
     pct >= 75
       ? "from-cyan-400 to-sky-500"          // #06BEE1 family
       : pct >= 50
-      ? "from-blue-500 to-indigo-500"        // #1768AC / #2541B2 family
-      : "from-amber-500 to-orange-400";
+        ? "from-blue-500 to-indigo-500"        // #1768AC / #2541B2 family
+        : "from-amber-500 to-orange-400";
 
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-20 rounded-full bg-border/40 overflow-hidden">
-        <div
-          className={`h-full rounded-full bg-gradient-to-r ${color} transition-[width] duration-700 ease-out delay-100`}
-          style={{ width: `${pct}%` }}
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1], delay: 0.2 }}
+          className={`h-full rounded-full bg-gradient-to-r ${color}`}
         />
       </div>
       <span className="text-xs font-semibold tabular-nums text-text-secondary">

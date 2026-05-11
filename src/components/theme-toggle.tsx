@@ -13,14 +13,11 @@ export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Defer setState so it is not synchronous in the effect body (react-hooks/set-state-in-effect).
-    queueMicrotask(() => {
-      setMounted(true);
-      const stored = localStorage.getItem("theme") as "dark" | "light" | null;
-      const initial = stored ?? "dark";
-      setTheme(initial);
-      document.documentElement.setAttribute("data-theme", initial);
-    });
+    setMounted(true);
+    const stored = localStorage.getItem("theme") as "dark" | "light" | null;
+    const initial = stored ?? "dark";
+    setTheme(initial);
+    document.documentElement.setAttribute("data-theme", initial);
   }, []);
 
   const toggle = () => {

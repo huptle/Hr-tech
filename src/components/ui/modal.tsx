@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
-/**
- * Native <dialog> + showModal() — uses the browser top layer so the panel is not
- * trapped under sticky headers, transformed ancestors, or broken portals (common
- * on LAN / mobile / strict privacy modes).
- */
 export function Modal({
   isOpen,
   onClose,
@@ -19,59 +16,57 @@ export function Modal({
   title: string;
   children: React.ReactNode;
 }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  const handlePointerDownBackdrop = useCallback(
-    (e: React.PointerEvent<HTMLDialogElement>) => {
-      const el = dialogRef.current;
-      if (!el?.open) return;
-      const r = el.getBoundingClientRect();
-      const { clientX: x, clientY: y } = e;
-      if (x < r.left || x > r.right || y < r.top || y > r.bottom) {
-        e.preventDefault();
-        onClose();
-      }
-    },
-    [onClose]
-  );
-
-  useLayoutEffect(() => {
-    const d = dialogRef.current;
-    if (!d) return;
+  useEffect(() => {
     if (isOpen) {
-      if (!d.open) d.showModal();
-    } else if (d.open) {
-      d.close();
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
     }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [isOpen]);
 
-  useEffect(() => {
-    const d = dialogRef.current;
-    if (!d) return;
-    const sync = () => onClose();
-    d.addEventListener("close", sync);
-    return () => d.removeEventListener("close", sync);
-  }, [onClose]);
-
-  return (
-    <dialog
-      ref={dialogRef}
-      className="fixed left-0 right-0 top-0 z-[2147483647] m-auto max-h-[85vh] w-[min(100vw-2rem,32rem)] border-0 bg-surface p-0 text-text-primary shadow-2xl ring-1 ring-border/40 open:flex open:flex-col [&::backdrop]:bg-[hsl(220_80%_5%/0.75)] [&::backdrop]:backdrop-blur-sm"
-      onPointerDown={handlePointerDownBackdrop}
-    >
-      <div className="flex shrink-0 items-center justify-between border-b border-border/30 bg-surface/50 px-6 py-4 backdrop-blur-md">
-        <h3 id="modal-title" className="font-semibold text-text-primary">
-          {title}
-        </h3>
-        <button
-          type="button"
-          onClick={() => onClose()}
-          className="rounded-full p-1 text-text-muted transition-colors hover:bg-accent/10 hover:text-text-primary"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">{children}</div>
-    </dialog>
+  const modalContent = (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pb-20 sm:pb-6">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
+            className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border/40 bg-surface shadow-2xl z-10 flex flex-col max-h-[85vh]"
+          >
+            <div className="flex shrink-0 items-center justify-between border-b border-border/30 px-6 py-4 bg-surface/50 backdrop-blur-md">
+              <h3 className="font-semibold text-text-primary">{title}</h3>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full p-1 text-text-muted hover:bg-accent/10 hover:text-text-primary transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 flex-1">
+              {children}
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
+
+  if (typeof document !== "undefined") {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 }
