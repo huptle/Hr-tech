@@ -48,7 +48,9 @@ jobs:
 
       - name: Build
         env:
-          DATABASE_URL: file:./dev.db
+          # Build never connects to the DB, but Prisma validates the URL format.
+          DATABASE_URL: postgresql://build:build@build:5432/build?schema=public
+          AUTH_SECRET: build-time-placeholder-secret-not-used-at-runtime
         run: npm run build
 
       - name: Set up Docker Buildx

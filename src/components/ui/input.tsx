@@ -6,7 +6,8 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, id, ...props }, ref) => {
+  ({ className, type, label: _label, id, ...props }, ref) => {
+    void _label;
     return (
       <input
         type={type}
@@ -26,8 +27,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 );
 Input.displayName = "Input";
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
@@ -48,8 +48,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 Textarea.displayName = "Textarea";
 
-export interface SelectProps
-  extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, children, ...props }, ref) => {

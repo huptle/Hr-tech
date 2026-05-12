@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16
+    container_name: hr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-hr_tech}
+    volumes:
+      - hr-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-hr_tech}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - hrnet
+
+  app:
+    # On the VPS the CI workflow sets DOCKER_IMAGE to a pushed GHCR tag.
+    # Locally you can run `docker compose --profile build up --build` to build from source instead.
+    image: ${DOCKER_IMAGE:-hr-tech:local}
+    container_name: hr-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      NODE_ENV: production
+      PORT: "3000"
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - hrnet
+
+  # Optional local-build profile: `docker compose --profile build up --build`
+  app-build:
+    profiles: ["build"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hr-tech:local
+    container_name: hr-app-build
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      NODE_ENV: production
+      PORT: "3000"
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - hrnet
+
+networks:
+  hrnet:
+
+volumes:
+  hr-postgres-data:

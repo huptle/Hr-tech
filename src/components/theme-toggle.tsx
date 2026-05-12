@@ -1,7 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Sun, Moon } from "lucide-react";
+
+type Theme = "dark" | "light";
+
+function readStoredTheme(): Theme {
+  if (typeof window === "undefined") return "dark";
+  const stored = window.localStorage.getItem("theme");
+  return stored === "light" ? "light" : "dark";
+}
+
+function subscribeTheme(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
 
 /**
  * Minimal dark/light theme toggle.
@@ -9,26 +23,20 @@ import { Sun, Moon } from "lucide-react";
  * Works without next-themes dependency.
  */
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem("theme") as "dark" | "light" | null;
-    const initial = stored ?? "dark";
-    setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
-  }, []);
+  const theme = useSyncExternalStore<Theme | null>(
+    subscribeTheme,
+    readStoredTheme,
+    () => null,
+  );
 
   const toggle = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("theme", next);
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    window.localStorage.setItem("theme", next);
     document.documentElement.setAttribute("data-theme", next);
+    window.dispatchEvent(new StorageEvent("storage", { key: "theme", newValue: next }));
   };
 
-  // Prevent hydration flash — render once mounted
-  if (!mounted) {
+  if (theme === null) {
     return (
       <div className="h-8 w-8 rounded-lg" aria-hidden />
     );

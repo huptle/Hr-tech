@@ -3,8 +3,24 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model HrUser {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         String     @default("HR Manager")
+  designation  String     @default("HR Manager")
+  company      String     @default("")
+  phone        String     @default("")
+  isAdmin      Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  activities   Activity[]
+  templates    Template[]
 }
 
 model Job {
@@ -12,11 +28,16 @@ model Job {
   title                String
   description          String              @default("")
   screeningDurationMin Int                 @default(15)
+  status               String              @default("Live")
+  dept                 String              @default("")
+  location             String              @default("")
+  mode                 String              @default("Remote")
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   candidates           Candidate[]
   questions            ScreeningQuestion[]
   slots                InterviewSlot[]
+  activities           Activity[]
 }
 
 model ScreeningQuestion {
@@ -28,25 +49,28 @@ model ScreeningQuestion {
 }
 
 model Candidate {
-  id                     String          @id @default(cuid())
-  jobId                  String
-  job                    Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  name                   String
-  email                  String
-  phone                  String?
-  resumeNotes            String          @default("")
-  joiningAvailability    String          @default("")
-  resumeVerified         Boolean         @default(false)
-  status                 String          @default("imported")
-  rankScore              Float?
-  voiceTranscriptNotes   String          @default("")
+  id                    String          @id @default(cuid())
+  jobId                 String
+  job                   Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  name                  String
+  email                 String
+  phone                 String?
+  location              String          @default("")
+  resumeNotes           String          @default("")
+  joiningAvailability   String          @default("")
+  resumeVerified        Boolean         @default(false)
+  status                String          @default("imported")
+  journey               String          @default("Applied")
+  rankScore             Float?
+  voiceTranscriptNotes  String          @default("")
   /** Short manager-facing summary (Gemini). */
-  aiSummary              String          @default("")
+  aiSummary             String          @default("")
   /** JSON array: { "question": string, "answer": string }[] for async text screening. */
-  asyncScreeningAnswers  String          @default("")
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
-  bookedSlots            InterviewSlot[]
+  asyncScreeningAnswers String          @default("")
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  bookedSlots           InterviewSlot[]
+  activities            Activity[]
 }
 
 model InterviewSlot {
@@ -58,4 +82,29 @@ model InterviewSlot {
   mode        String     @default("hr")
   candidateId String?
   candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  title     String
+  type      String   @default("Email")
+  category  String   @default("Other")
+  body      String   @default("")
+  authorId  String?
+  author    HrUser?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Activity {
+  id          String     @id @default(cuid())
+  tag         String
+  what        String
+  actorId     String?
+  actor       HrUser?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  candidateId String?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  jobId       String?
+  job         Job?       @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
 }

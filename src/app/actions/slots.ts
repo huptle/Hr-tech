@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 
 function parseSlotTimes(formData: FormData): {
   startsAt: Date;
@@ -22,6 +24,7 @@ function parseSlotTimes(formData: FormData): {
 }
 
 export async function createInterviewSlot(jobId: string, formData: FormData) {
+  const user = await requireUser();
   const parsed = parseSlotTimes(formData);
   if (!parsed) return;
   const mode = String(formData.get("mode") ?? "hr");
@@ -36,8 +39,17 @@ export async function createInterviewSlot(jobId: string, formData: FormData) {
     },
   });
 
+  await logActivity({
+    tag: "interview",
+    what: `Created a new ${safeMode === "ai" ? "AI" : "HR"} interview slot.`,
+    actorId: user.id,
+    jobId,
+  });
+
   revalidatePath(`/jobs/${jobId}/schedule`);
   revalidatePath(`/jobs/${jobId}`);
+  revalidatePath("/schedule");
+  revalidatePath("/");
 }
 
 export async function assignSlotToCandidate(
@@ -45,6 +57,7 @@ export async function assignSlotToCandidate(
   jobId: string,
   formData: FormData,
 ) {
+  const user = await requireUser();
   const candidateId = String(formData.get("candidateId") ?? "").trim();
   if (!candidateId) {
     await prisma.interviewSlot.update({
@@ -56,19 +69,31 @@ export async function assignSlotToCandidate(
       where: { id: slotId },
       data: { candidateId },
     });
-    await prisma.candidate.update({
+    const cand = await prisma.candidate.update({
       where: { id: candidateId },
-      data: { status: "scheduled" },
+      data: { status: "scheduled", journey: "Round 1" },
+    });
+    await logActivity({
+      tag: "interview",
+      what: `${cand.name} was scheduled for an interview.`,
+      actorId: user.id,
+      candidateId,
+      jobId,
     });
   }
 
   revalidatePath(`/jobs/${jobId}/schedule`);
   revalidatePath(`/jobs/${jobId}`);
   revalidatePath(`/jobs/${jobId}/shortlist`);
+  revalidatePath("/schedule");
+  revalidatePath("/");
 }
 
 export async function deleteInterviewSlot(slotId: string, jobId: string) {
+  await requireUser();
   await prisma.interviewSlot.delete({ where: { id: slotId } });
   revalidatePath(`/jobs/${jobId}/schedule`);
   revalidatePath(`/jobs/${jobId}`);
+  revalidatePath("/schedule");
+  revalidatePath("/");
 }

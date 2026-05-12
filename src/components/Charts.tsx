@@ -4,7 +4,9 @@ import React from 'react';
 
 const BLUES = ['#dce8f8', '#a8c4e8', '#6896d0', '#3f64ba', '#253b6e', '#182748'];
 
-export function HBarChart({ data, unit = '', maxVal }: { data: any[], unit?: string, maxVal?: number }) {
+type HBarDatum = { label: string; value: number; color?: string };
+
+export function HBarChart({ data, unit = '', maxVal }: { data: HBarDatum[], unit?: string, maxVal?: number }) {
   const max = maxVal || Math.max(...data.map(d => d.value), 1);
   return (
     <div className="flex flex-col gap-3">
@@ -33,7 +35,9 @@ export function HBarChart({ data, unit = '', maxVal }: { data: any[], unit?: str
   );
 }
 
-export function LineChart({ data, height = 140, color = BLUES[3] }: { data: any[], height?: number, color?: string }) {
+type LineDatum = { label: string; value: number };
+
+export function LineChart({ data, height = 140, color = BLUES[3] }: { data: LineDatum[], height?: number, color?: string }) {
   const W = 400, H = height;
   const max = Math.max(...data.map(d => d.value), 1);
   const min = Math.min(...data.map(d => d.value), 0);

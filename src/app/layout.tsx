@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AppNav } from "@/components/app-nav";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -36,11 +35,8 @@ function ThemeInitScript() {
       } catch(e) {}
     })();
   `;
-  // eslint-disable-next-line react/no-danger
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }
-
-import { Providers } from "@/Providers";
 
 export default function RootLayout({
   children,
@@ -57,9 +53,7 @@ export default function RootLayout({
         <ThemeInitScript />
       </head>
       <body className="flex min-h-full flex-col bg-background text-text-primary">
-        <Providers>
-          <div className="flex-1">{children}</div>
-        </Providers>
+        <div className="flex-1 flex flex-col">{children}</div>
       </body>
     </html>
   );

@@ -191,13 +191,13 @@ export function Section({
   delay?: number;
   [key: string]: unknown;
 }) {
+  void rest;
   return (
     <motion.section
       initial={{ opacity: 0, y: 22 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay, ease }}
       className={className}
-      {...(rest as React.HTMLAttributes<HTMLElement>)}
     >
       {children}
     </motion.section>
