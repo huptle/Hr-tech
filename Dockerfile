@@ -26,6 +26,12 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl tini
+
+# Install Prisma CLI globally so the entrypoint can run `prisma db push` on boot.
+# The standalone Next.js output only ships runtime deps; prisma is a dev dep.
+# Keep the version in lockstep with package.json.
+RUN npm install -g prisma@6.19.2 && npm cache clean --force
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
@@ -39,9 +45,10 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+# Generated Prisma client (`.prisma/client`) and `@prisma/client` runtime —
+# copy explicitly so we don't depend on Next's standalone tracer catching them.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

@@ -11,7 +11,7 @@ if [ -z "${AUTH_SECRET:-}" ] || [ "${#AUTH_SECRET}" -lt 16 ]; then
 fi
 
 echo "[entrypoint] Applying Prisma schema..."
-npx --no-install prisma db push --skip-generate --accept-data-loss=false || {
+prisma db push --skip-generate || {
   echo "[entrypoint] prisma db push failed" >&2
   exit 1
 }
