@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
@@ -8,6 +8,29 @@ import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "hr_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+
+/**
+ * Secure cookies are only sent by the browser over HTTPS.
+ * If you run the production Docker image on plain http://IP:3000, Secure cookies
+ * are never stored/sent → every navigation looks logged out.
+ *
+ * Order: explicit SESSION_COOKIE_SECURE → x-forwarded-proto → default off when
+ * the request is not clearly HTTPS (so IP:port works; put TLS in front for real prod).
+ */
+async function sessionCookieSecure(): Promise<boolean> {
+  const o = process.env.SESSION_COOKIE_SECURE?.toLowerCase();
+  if (o === "false" || o === "0" || o === "off") return false;
+  if (o === "true" || o === "1" || o === "on") return true;
+
+  const h = await headers();
+  const raw = h.get("x-forwarded-proto") ?? h.get("X-Forwarded-Proto") ?? "";
+  const proto = raw.split(",")[0]?.trim().toLowerCase();
+  if (proto === "https") return true;
+  if (proto === "http") return false;
+
+  // Direct hit to Node (no reverse proxy) — typical VPS http://x.x.x.x:3000
+  return false;
+}
 
 function getSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
@@ -46,9 +69,10 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 
 export async function setSessionCookie(token: string): Promise<void> {
   const store = await cookies();
+  const secure = await sessionCookieSecure();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure,
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
@@ -57,9 +81,10 @@ export async function setSessionCookie(token: string): Promise<void> {
 
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies();
+  const secure = await sessionCookieSecure();
   store.set(SESSION_COOKIE, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure,
     sameSite: "lax",
     path: "/",
     maxAge: 0,
