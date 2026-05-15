@@ -20,7 +20,7 @@ export default async function ProfilePage() {
 
       <div className="bg-surface border border-border rounded-3xl overflow-hidden shadow-sm">
         <div className="p-8 border-b border-border bg-surface-2/30 flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-3xl font-black shadow-2xl ring-8 ring-accent/5">
+          <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center text-white text-3xl font-black shadow-2xl ring-8 ring-accent/5">
             {user.initials}
           </div>
           <h2 className="text-xl font-black text-text-primary mt-4 tracking-tight">{user.name}</h2>
@@ -100,7 +100,7 @@ export default async function ProfilePage() {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border mt-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl gradient-bg px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all"
             >
               <Edit size={16} /> Save changes
             </button>

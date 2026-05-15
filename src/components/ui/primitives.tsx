@@ -7,9 +7,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/* ─── PageWrapper ─────────────────────────────────────────────────────────────
-   Wraps every page: mesh-bg orbs + a relative z-10 content layer.
-*/
 export function PageWrapper({
   children,
   className,
@@ -19,7 +16,6 @@ export function PageWrapper({
 }) {
   return (
     <div className={cn("relative min-h-full", className)}>
-      <div className="mesh-bg" aria-hidden />
       <div className="relative z-10">{children}</div>
     </div>
   );
@@ -118,7 +114,7 @@ export function SectionHeading({
    Label + input/textarea wrapper with shared styles.
 */
 const fieldInputClass =
-  "w-full rounded-xl border border-border/40 bg-surface-2/60 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition-all duration-200 hover:border-accent/30 focus:outline-none focus:border-accent/60 focus:shadow-[0_0_0_3px_rgba(6,190,225,0.10)]";
+  "w-full rounded-xl border border-border/40 bg-surface-2/60 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition-all duration-200 hover:border-accent/30 focus:outline-none focus:border-accent/60 focus:shadow-[0_0_0_3px_rgba(63,100,186,0.10)]";
 
 const fieldLabelClass =
   "block text-xs font-medium uppercase tracking-wider text-text-muted mb-1.5";
@@ -325,7 +321,7 @@ export function InitialAvatar({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center gradient-bg font-bold text-white shadow-md shadow-accent/20",
+        "flex shrink-0 items-center justify-center bg-accent font-bold text-white shadow-md shadow-accent/20",
         shape === "circle" ? "rounded-full" : "rounded-xl",
         sizes[size]
       )}
