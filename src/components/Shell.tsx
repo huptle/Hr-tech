@@ -139,7 +139,7 @@ export function Shell({
               <SideNavItem icon={FileText} label="Reports" href="/reports" active={isActive(pathname, '/reports')} />
 
               <div className="mt-auto pt-6 flex flex-col gap-1 border-t border-border/50">
-                <div className="mx-1 mb-6 p-4 rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-accent relative overflow-hidden group">
+                <div className="mx-1 mb-6 p-4 rounded-3xl bg-accent-deep relative overflow-hidden group">
                   <div className="absolute top-0 right-0 opacity-10 -translate-y-1/4 translate-x-1/4 group-hover:scale-125 transition-transform duration-700">
                     <Sparkles size={100} />
                   </div>
@@ -205,7 +205,7 @@ export function Shell({
               href="/profile"
               className="flex items-center gap-3 pl-1 pr-1 lg:pr-3 py-1 rounded-full border border-border bg-surface-2 cursor-pointer hover:border-accent transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 via-blue-600 to-accent flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-accent/20 ring-2 ring-accent/10">
+              <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-accent/20 ring-2 ring-accent/10">
                 {user.initials || '??'}
               </div>
               <div className="hidden lg:flex flex-col">

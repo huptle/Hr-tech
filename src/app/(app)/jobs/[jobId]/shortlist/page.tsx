@@ -115,7 +115,7 @@ export default async function ShortlistPage({ params }: PageProps) {
                   >
                     <div className="flex gap-4 items-start">
                       {/* Rank badge */}
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl gradient-bg shadow-lg shadow-accent/20 text-sm font-bold text-white">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent shadow-lg shadow-accent/20 text-sm font-bold text-white">
                         {idx === 0 ? (
                           <Trophy className="h-5 w-5" />
                         ) : (
