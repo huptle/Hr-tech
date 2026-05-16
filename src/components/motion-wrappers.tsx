@@ -112,7 +112,7 @@ export function AnimCard({
       transition={{ duration: 0.5, delay, ease }}
       whileHover={{
         y: -3,
-        boxShadow: "0 0 0 1px rgba(6,190,225,0.3), 0 8px 40px rgba(6,190,225,0.15)",
+        boxShadow: "0 0 0 1px rgba(63,100,186,0.3), 0 8px 40px rgba(63,100,186,0.15)",
       }}
       className={className}
     >
@@ -151,7 +151,7 @@ export function StatCard({
         )}
       </div>
       {value != null ? (
-        <p className="text-4xl font-bold tabular-nums gradient-text">{value}</p>
+        <p className="text-4xl font-bold tabular-nums text-accent">{value}</p>
       ) : (
         <div className="mt-1">{sub}</div>
       )}
@@ -222,11 +222,11 @@ export function PipelineStep({
       }}
       whileHover={{
         y: -3,
-        boxShadow: "0 0 0 1px rgba(6,190,225,0.3), 0 8px 32px rgba(6,190,225,0.12)",
+        boxShadow: "0 0 0 1px rgba(63,100,186,0.3), 0 8px 32px rgba(63,100,186,0.12)",
       }}
       className="rounded-2xl border border-border/40 bg-surface/80 backdrop-blur-sm p-5 flex gap-4 cursor-default transition-colors"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full gradient-bg text-xs font-bold text-white shadow-lg shadow-accent/30">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-white shadow-lg shadow-accent/30">
         {index}
       </span>
       <div>
@@ -251,7 +251,7 @@ export function AnimTableRow({
         hidden: { opacity: 0, x: -8 },
         show: { opacity: 1, x: 0, transition: { duration: 0.35, ease } },
       }}
-      whileHover={{ backgroundColor: "rgba(6,190,225,0.03)" }}
+      whileHover={{ backgroundColor: "rgba(63,100,186,0.03)" }}
       className={cn("transition-colors", className)}
     >
       {children}
@@ -262,13 +262,12 @@ export function AnimTableRow({
 // ─── ScoreBar - animated score pill ───────────────────────────────────────────
 export function ScoreBar({ score }: { score: number }) {
   const pct = Math.min(100, Math.max(0, score));
-  // Palette-aligned colors: cyan → mid-blue → deep-blue
   const color =
     pct >= 75
-      ? "from-cyan-400 to-sky-500"          // #06BEE1 family
+      ? "bg-accent"
       : pct >= 50
-        ? "from-blue-500 to-indigo-500"        // #1768AC / #2541B2 family
-        : "from-amber-500 to-orange-400";
+        ? "bg-accent-2"
+        : "bg-amber-500";
 
   return (
     <div className="flex items-center gap-2">
@@ -277,7 +276,7 @@ export function ScoreBar({ score }: { score: number }) {
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1], delay: 0.2 }}
-          className={`h-full rounded-full bg-gradient-to-r ${color}`}
+          className={`h-full rounded-full ${color}`}
         />
       </div>
       <span className="text-xs font-semibold tabular-nums text-text-secondary">

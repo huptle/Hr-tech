@@ -41,7 +41,6 @@ export default async function SchedulePage({ params }: PageProps) {
 
   return (
     <div className="relative min-h-full">
-      <div className="mesh-bg" aria-hidden />
       <div className="relative z-10">
 
         <PageHeader className="border-b border-white/6 bg-background/60 backdrop-blur-sm">
@@ -158,7 +157,7 @@ export default async function SchedulePage({ params }: PageProps) {
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl gradient-bg px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-all duration-200 hover:shadow-accent/40 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Plus className="h-4 w-4" />
                   Add slot
