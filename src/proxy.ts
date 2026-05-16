@@ -2,7 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 const SESSION_COOKIE = "hr_session";
+/** Pages where anonymous users are allowed (sign-in flow). */
 const PUBLIC_PATHS = new Set(["/signin", "/signup"]);
+/**
+ * Routes that skip session check in proxy (auth handled inside the handler).
+ * Must NOT be treated like signin/signup — signed-in users must still reach these.
+ */
+const SESSION_OPTIONAL_PATHS = new Set(["/api/resume/parse"]);
 
 function getSecret(): Uint8Array | null {
   const secret = process.env.AUTH_SECRET;
@@ -25,17 +31,18 @@ async function hasValidSession(req: NextRequest): Promise<boolean> {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isPublic = PUBLIC_PATHS.has(pathname);
+  const isAuthPage = PUBLIC_PATHS.has(pathname);
+  const allowWithoutSession = isAuthPage || SESSION_OPTIONAL_PATHS.has(pathname);
   const authed = await hasValidSession(req);
 
-  if (!authed && !isPublic) {
+  if (!authed && !allowWithoutSession) {
     const url = req.nextUrl.clone();
     url.pathname = "/signin";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (authed && isPublic) {
+  if (authed && isAuthPage) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
     url.search = "";

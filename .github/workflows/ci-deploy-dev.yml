@@ -1,28 +1,22 @@
-# CI: lint, Next build, Docker image build (PR + push).
-# CD: push image to GHCR, SSH to Ubuntu host, pull image, docker compose up (main/master only).
+# Dev branch:
+#   • pull_request → lint + Next build + Docker build (verify only), no deploy
+#   • push to dev   → same CI + push image :dev-<sha> + :dev + SSH deploy to VPS_APP_PATH_DEV (e.g. port 3001)
 #
-# GitHub → Settings → Secrets and variables → Actions:
-#   VPS_HOST        — server IP or hostname
-#   VPS_USER        — SSH user
-#   VPS_SSH_KEY     — private key (full PEM)
-#   VPS_APP_PATH    — git clone path on server (contains docker-compose.yml)
-#   GHCR_USER       — GitHub username (for docker login on the VPS)
-#   GHCR_READ_TOKEN — GitHub PAT with read:packages (pull private images from GHCR)
+# One-time on VPS: second clone + .env with APP_PORT=3001 and its own Postgres DB name.
+#   VPS_APP_PATH_DEV — e.g. /opt/portal/Hr-tech-dev
 #
-# Repo → Settings → Actions → General → Workflow permissions:
-#   enable "Read and write permissions" (needed for GITHUB_TOKEN to push to GHCR),
-#   or use a PAT with write:packages as a secret instead of GITHUB_TOKEN for login.
+# Other secrets same as production (VPS_HOST, VPS_USER, VPS_SSH_KEY, GHCR_*).
 
-name: CI / Docker / Deploy
+name: CI / Deploy dev
 
 on:
   push:
-    branches: [main, master]
+    branches: [dev]
   pull_request:
-    branches: [main, master]
+    branches: [dev]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-dev-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -48,7 +42,6 @@ jobs:
 
       - name: Build
         env:
-          # Build never connects to the DB, but Prisma validates the URL format.
           DATABASE_URL: postgresql://build:build@build:5432/build?schema=public
           AUTH_SECRET: build-time-placeholder-secret-not-used-at-runtime
         run: npm run build
@@ -61,25 +54,25 @@ jobs:
         with:
           context: .
           push: false
-          tags: portal:ci
+          tags: portal:ci-dev
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   build-and-push:
     needs: ci
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     outputs:
       docker_image: ${{ steps.meta.outputs.docker_image }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Image ref (GHCR is lowercase)
+      - name: Image ref (dev tags)
         id: meta
         run: |
           lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "docker_image=ghcr.io/${lower}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo "docker_image_latest=ghcr.io/${lower}:latest" >> "$GITHUB_OUTPUT"
+          echo "docker_image=ghcr.io/${lower}:dev-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "docker_image_dev=ghcr.io/${lower}:dev" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -91,27 +84,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push (dev)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
             ${{ steps.meta.outputs.docker_image }}
-            ${{ steps.meta.outputs.docker_image_latest }}
+            ${{ steps.meta.outputs.docker_image_dev }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy:
+  deploy-dev:
     needs: build-and-push
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy over SSH
+      - name: Deploy dev stack over SSH
         uses: appleboy/ssh-action@v1.2.5
         env:
-          VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
-          DEPLOY_BRANCH: ${{ github.ref_name }}
+          VPS_APP_PATH: ${{ secrets.VPS_APP_PATH_DEV }}
+          DEPLOY_BRANCH: dev
           DOCKER_IMAGE: ${{ needs.build-and-push.outputs.docker_image }}
           GHCR_USER: ${{ secrets.GHCR_USER }}
           GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
@@ -122,12 +115,45 @@ jobs:
           envs: VPS_APP_PATH,DEPLOY_BRANCH,DOCKER_IMAGE,GHCR_USER,GHCR_READ_TOKEN
           script: |
             set -e
+            if [ -z "$VPS_APP_PATH" ]; then
+              echo "FATAL: VPS_APP_PATH_DEV secret is not set in GitHub Actions." >&2
+              exit 1
+            fi
             cd "$VPS_APP_PATH"
             git fetch origin
             git checkout "$DEPLOY_BRANCH"
             git reset --hard "origin/$DEPLOY_BRANCH"
             [ -f .env ] || touch .env
-            printf '%s' "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            login_ok=0
+            for i in 1 2 3; do
+              if printf '%s' "$GHCR_READ_TOKEN" | timeout 30 docker login ghcr.io -u "$GHCR_USER" --password-stdin; then
+                login_ok=1
+                break
+              fi
+              echo "docker login attempt $i failed, retrying in 5s..." >&2
+              sleep 5
+            done
+            if [ "$login_ok" -ne 1 ]; then
+              echo "FATAL: docker login ghcr.io failed." >&2
+              exit 1
+            fi
+
             export DOCKER_IMAGE
-            docker compose pull
+
+            pull_ok=0
+            for i in 1 2 3; do
+              if timeout 300 docker compose pull; then
+                pull_ok=1
+                break
+              fi
+              echo "docker compose pull attempt $i failed, retrying in 10s..." >&2
+              sleep 10
+            done
+            if [ "$pull_ok" -ne 1 ]; then
+              echo "FATAL: docker compose pull failed." >&2
+              exit 1
+            fi
+
             docker compose up -d --no-build
+            docker image prune -f >/dev/null 2>&1 || true

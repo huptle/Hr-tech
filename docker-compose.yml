@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:16
-    container_name: hr-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -22,7 +21,6 @@ services:
     # On the VPS the CI workflow sets DOCKER_IMAGE to a pushed GHCR tag.
     # Locally you can run `docker compose --profile build up --build` to build from source instead.
     image: ${DOCKER_IMAGE:-hr-tech:local}
-    container_name: hr-app
     restart: unless-stopped
     depends_on:
       db:
@@ -46,7 +44,6 @@ services:
       context: .
       dockerfile: Dockerfile
     image: hr-tech:local
-    container_name: hr-app-build
     depends_on:
       db:
         condition: service_healthy
