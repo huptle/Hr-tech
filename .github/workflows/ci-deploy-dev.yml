@@ -110,6 +110,9 @@ jobs:
           DOCKER_IMAGE: ${{ needs.build-and-push.outputs.docker_image }}
           GHCR_USER: ${{ secrets.GHCR_USER }}
           GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          GIT_DEPLOY_TOKEN: ${{ secrets.GIT_DEPLOY_TOKEN }}
+          
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
