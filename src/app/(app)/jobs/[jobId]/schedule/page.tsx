@@ -3,9 +3,15 @@ import {
   createInterviewSlot,
   deleteInterviewSlot,
 } from "@/app/actions/slots";
+import { getSchedulingCampaignStatus } from "@/app/actions/scheduling-calls";
 import { ScheduleSlotEmailDrafts } from "@/components/ai/schedule-email-drafts";
+import { AiSchedulingPanel } from "@/components/scheduling/ai-scheduling-panel";
 import { isGeminiConfigured } from "@/lib/gemini";
+import { isGoogleCalendarConfigured } from "@/lib/google-calendar";
+import { normalizeIndianPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
+import { isVapiConfigured } from "@/lib/vapi";
+import { requireUser } from "@/lib/auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader, Section } from "@/components/motion-wrappers";
@@ -21,6 +27,7 @@ type PageProps = { params: Promise<{ jobId: string }> };
 
 export default async function SchedulePage({ params }: PageProps) {
   const { jobId } = await params;
+  const user = await requireUser();
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     include: {
@@ -38,9 +45,24 @@ export default async function SchedulePage({ params }: PageProps) {
   if (!job) notFound();
 
   const geminiReady = isGeminiConfigured();
+  const vapiReady = isVapiConfigured();
+  const googleConnected = user.googleConnected;
+
+  const callableCandidates = job.candidates
+    .filter((c) => c.phone && normalizeIndianPhone(c.phone))
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      phoneE164: normalizeIndianPhone(c.phone!),
+      rankScore: c.rankScore,
+    }));
+
+  const recentCampaigns = await getSchedulingCampaignStatus(jobId);
 
   return (
     <div className="relative min-h-full">
+      <div className="mesh-bg" aria-hidden />
       <div className="relative z-10">
 
         <PageHeader className="border-b border-white/6 bg-background/60 backdrop-blur-sm">
@@ -81,8 +103,40 @@ export default async function SchedulePage({ params }: PageProps) {
 
         <main className="mx-auto max-w-5xl space-y-6 px-6 py-10">
 
-          {/* Proctoring alert */}
           <Section delay={0.02}>
+            <AiSchedulingPanel
+              jobId={job.id}
+              candidates={callableCandidates}
+              vapiReady={vapiReady}
+              googleConnected={googleConnected && isGoogleCalendarConfigured()}
+            />
+          </Section>
+
+          {recentCampaigns.length > 0 && (
+            <Section delay={0.04}>
+              <div className="rounded-2xl border border-white/8 bg-surface/80 p-6">
+                <h2 className="text-sm font-semibold text-text-primary mb-4">Recent AI call campaigns</h2>
+                <ul className="space-y-3 text-xs">
+                  {recentCampaigns.map((camp) => (
+                    <li key={camp.id} className="border-b border-white/5 pb-3 last:border-0">
+                      <p className="text-text-muted mb-2">
+                        {camp.createdAt.toLocaleString()} · {camp.calls.length} call(s)
+                      </p>
+                      {camp.calls.map((call) => (
+                        <div key={call.id} className="flex justify-between gap-2 py-1">
+                          <span className="text-text-primary">{call.candidate.name}</span>
+                          <span className="text-text-muted capitalize">{call.status}</span>
+                        </div>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Section>
+          )}
+
+          {/* Proctoring alert */}
+          <Section delay={0.06}>
             <div className="flex items-start gap-3 rounded-2xl border border-warning/20 bg-warning/8 px-5 py-4 text-sm text-warning">
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
               <span>
@@ -157,7 +211,7 @@ export default async function SchedulePage({ params }: PageProps) {
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent/25 transition-all duration-200 hover:shadow-accent/40 hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 rounded-xl gradient-bg px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Plus className="h-4 w-4" />
                   Add slot

@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
 /* ─── Design Tokens ──────────────────────────────────────────────────────────── */
-/* Palette: #253b6e  #ffffff  #324f94  #182748  #e6e6e6  #3f64ba */
+/* Palette:  #FFFFFF  #06BEE1  #1768AC  #2541B2  #03256C */
 
 :root {
   /* Dark mode (default) */
-  --background: 222 50% 19%;   /* #182748 */
-  --surface: 222 48% 17%;      /* ~#131f3a — sinks below bg for dark depth */
-  --surface-2: 222 45% 20%;    /* ~#182b47 close to bg */
-  --surface-3: 222 42% 23%;    /* ~#1d3455 */
-  --border: 222 35% 28%;       /* ~#2c4770 — subtle separation */
-  --border-subtle: 222 40% 21%;/* ~#1b2f4d */
+  --background: 220 80% 5%;
+  /* near-black navy */
+  --surface: 220 70% 8%;
+  --surface-2: 220 60% 12%;
+  --border: 220 40% 18%;
+  --border-subtle: 220 35% 13%;
 
-  --text-primary: 0 0% 100%;   /* #ffffff */
-  --text-secondary: 0 0% 90%;  /* #e6e6e6 */
-  --text-muted: 0 0% 69%;      /* ~#b0b0b0 */
+  --text-primary: 0 0% 100%;
+  /* #FFFFFF */
+  --text-secondary: 210 30% 75%;
+  --text-muted: 214 25% 50%;
 
-  --accent: 222 49% 49%;       /* #3f64ba */
-  --accent-2: 222 49% 39%;     /* #324f94 */
-  --accent-deep: 220 50% 29%;  /* #253b6e */
-  --accent-navy: 222 50% 19%;  /* #182748 */
-  --accent-glow: rgba(63, 100, 186, 0.18);
+  --accent: 193 95% 45%;
+  /* #06BEE1 */
+  --accent-2: 212 75% 40%;
+  /* #1768AC */
+  --accent-deep: 226 70% 47%;
+  /* #2541B2 */
+  --accent-navy: 218 96% 22%;
+  /* #03256C */
+  --accent-glow: rgba(6, 190, 225, 0.18);
 
   --success: 160 60% 45%;
   --warning: 38 95% 64%;
@@ -28,29 +33,30 @@
 }
 
 [data-theme="light"] {
-  --background: 0 0% 90%;      /* #e6e6e6 */
-  --surface: 0 0% 100%;        /* #ffffff */
-  --surface-2: 0 0% 95%;       /* ~#f2f2f2 */
-  --surface-3: 220 20% 88%;    /* ~#dce0e8 */
-  --border: 220 30% 80%;       /* ~#c4cbd8 */
-  --border-subtle: 0 0% 88%;   /* ~#e0e0e0 */
+  --background: 0 0% 97%;
+  --surface: 0 0% 100%;
+  --surface-2: 220 20% 94%;
+  --border: 220 20% 85%;
+  --border-subtle: 220 18% 90%;
 
-  --text-primary: 222 50% 19%; /* #182748 */
-  --text-secondary: 220 50% 29%;/* #253b6e */
-  --text-muted: 222 30% 50%;   /* ~#6679a3 */
+  --text-primary: 218 96% 22%;
+  /* #03256C */
+  --text-secondary: 212 75% 30%;
+  /* darker #1768AC tone */
+  --text-muted: 220 25% 50%;
 
-  --accent: 222 49% 49%;       /* #3f64ba */
-  --accent-2: 222 49% 39%;     /* #324f94 */
-  --accent-deep: 220 50% 29%;  /* #253b6e */
-  --accent-navy: 222 50% 19%;  /* #182748 */
-  --accent-glow: rgba(63, 100, 186, 0.12);
+  --accent: 193 95% 35%;
+  /* #06BEE1 darkened for light bg */
+  --accent-2: 212 75% 40%;
+  --accent-deep: 226 70% 47%;
+  --accent-navy: 218 96% 22%;
+  --accent-glow: rgba(6, 190, 225, 0.12);
 }
 
 @theme inline {
   --color-background: hsl(var(--background));
   --color-surface: hsl(var(--surface));
   --color-surface-2: hsl(var(--surface-2));
-  --color-surface-3: hsl(var(--surface-3));
   --color-border: hsl(var(--border));
   --color-border-subtle: hsl(var(--border-subtle));
   --color-text-primary: hsl(var(--text-primary));
@@ -134,7 +140,7 @@ body {
 
 [data-theme="light"] .glass {
   background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(63, 100, 186, 0.12);
+  border: 1px solid rgba(6, 190, 225, 0.12);
 }
 
 .glass-strong {
@@ -146,15 +152,31 @@ body {
 
 [data-theme="light"] .glass-strong {
   background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(63, 100, 186, 0.15);
+  border: 1px solid rgba(6, 190, 225, 0.15);
+}
+
+/* Gradient uses the brand palette: #06BEE1 → #1768AC */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-2)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-2)));
+}
+
+.gradient-bg-deep {
+  background: linear-gradient(135deg, hsl(var(--accent-2)), hsl(var(--accent-deep)));
 }
 
 .glow {
-  box-shadow: 0 0 0 1px rgba(63, 100, 186, 0.35), 0 4px 32px rgba(63, 100, 186, 0.18);
+  box-shadow: 0 0 0 1px rgba(6, 190, 225, 0.35), 0 4px 32px rgba(6, 190, 225, 0.18);
 }
 
 .glow-sm {
-  box-shadow: 0 0 0 1px rgba(63, 100, 186, 0.2), 0 2px 16px rgba(63, 100, 186, 0.1);
+  box-shadow: 0 0 0 1px rgba(6, 190, 225, 0.2), 0 2px 16px rgba(6, 190, 225, 0.1);
 }
 
 /* ─── Input focus-visible ring ───────────────────────────────────────────────── */
@@ -163,4 +185,43 @@ textarea:focus-visible,
 select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px hsl(var(--accent) / 0.35), 0 0 0 1px hsl(var(--accent));
+}
+
+/* ─── Mesh gradient background orbs ────────────────────────────────────────── */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.mesh-bg::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(6, 190, 225, 0.10) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.mesh-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  right: -5%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(ellipse, rgba(37, 65, 178, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+[data-theme="light"] .mesh-bg::before {
+  background: radial-gradient(ellipse, rgba(6, 190, 225, 0.06) 0%, transparent 70%);
+}
+
+[data-theme="light"] .mesh-bg::after {
+  background: radial-gradient(ellipse, rgba(37, 65, 178, 0.04) 0%, transparent 70%);
 }

@@ -8,7 +8,11 @@ const PUBLIC_PATHS = new Set(["/signin", "/signup"]);
  * Routes that skip session check in proxy (auth handled inside the handler).
  * Must NOT be treated like signin/signup — signed-in users must still reach these.
  */
-const SESSION_OPTIONAL_PATHS = new Set(["/api/resume/parse"]);
+const SESSION_OPTIONAL_PATHS = new Set([
+  "/api/resume/parse",
+  "/api/webhooks/vapi",
+  "/api/auth/google/callback",
+]);
 
 function getSecret(): Uint8Array | null {
   const secret = process.env.AUTH_SECRET;

@@ -45,7 +45,7 @@ export default async function ShortlistPage() {
           <p className="text-sm text-text-muted mt-1">Add candidates to a job to populate the pipeline.</p>
           <Link
             href="/jobs"
-            className="inline-flex items-center gap-2 mt-6 rounded-xl bg-accent px-4 py-2 text-xs font-bold text-white"
+            className="inline-flex items-center gap-2 mt-6 rounded-xl gradient-bg px-4 py-2 text-xs font-bold text-white"
           >
             <Briefcase size={14} /> Go to jobs
           </Link>
@@ -86,7 +86,7 @@ export default async function ShortlistPage() {
                       key={c.id}
                       className="grid grid-cols-[36px_1.6fr_1fr_120px_120px] gap-4 items-center px-6 py-4 hover:bg-surface-2/40 transition-colors"
                     >
-                      <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-[10px] font-black text-white">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-[10px] font-black text-white">
                         {idx === 0 ? <Trophy size={14} /> : initials}
                       </div>
                       <div className="min-w-0">

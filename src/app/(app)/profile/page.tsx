@@ -1,12 +1,21 @@
 import { requireUser } from "@/lib/auth";
 import { signOut, updateProfile } from "@/app/actions/auth";
-import { Edit, LogOut, User, Mail, Briefcase, Building2, Phone, ShieldAlert } from "lucide-react";
+import { Edit, LogOut, User, Mail, Briefcase, Building2, Phone, ShieldAlert, Calendar } from "lucide-react";
+import Link from "next/link";
+import { isGoogleCalendarConfigured } from "@/lib/google-calendar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Profile · Huptle HR" };
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ google?: string }>;
+}) {
   const user = await requireUser();
+  const sp = await searchParams;
+  const googleOk = isGoogleCalendarConfigured();
+  const googleLinked = user.googleConnected;
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto flex flex-col gap-8">
@@ -19,8 +28,48 @@ export default async function ProfilePage() {
       </div>
 
       <div className="bg-surface border border-border rounded-3xl overflow-hidden shadow-sm">
+        <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+              <Calendar size={18} className="text-accent" />
+              Google Calendar
+            </h2>
+            <p className="text-xs text-text-muted mt-1 max-w-md">
+              Required for AI scheduling calls — checks free/busy and creates HR interview events.
+            </p>
+          </div>
+          {googleOk ? (
+            googleLinked ? (
+              <span className="text-xs font-bold text-green-500 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
+                Connected
+              </span>
+            ) : (
+              <Link
+                href="/api/auth/google"
+                className="inline-flex items-center gap-2 rounded-xl gradient-bg px-4 py-2 text-xs font-bold text-white"
+              >
+                Connect Google Calendar
+              </Link>
+            )
+          ) : (
+            <span className="text-xs text-text-muted">Not configured on server</span>
+          )}
+        </div>
+        {sp.google === "connected" && (
+          <p className="px-6 py-2 text-xs font-bold text-green-500 bg-green-500/5 border-b border-border">
+            Google Calendar connected successfully.
+          </p>
+        )}
+        {sp.google === "error" && (
+          <p className="px-6 py-2 text-xs font-bold text-red-500 bg-red-500/5 border-b border-border">
+            Google connection failed. Try again.
+          </p>
+        )}
+      </div>
+
+      <div className="bg-surface border border-border rounded-3xl overflow-hidden shadow-sm">
         <div className="p-8 border-b border-border bg-surface-2/30 flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center text-white text-3xl font-black shadow-2xl ring-8 ring-accent/5">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white text-3xl font-black shadow-2xl ring-8 ring-accent/5">
             {user.initials}
           </div>
           <h2 className="text-xl font-black text-text-primary mt-4 tracking-tight">{user.name}</h2>
@@ -100,7 +149,7 @@ export default async function ProfilePage() {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-border mt-2">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all"
+              className="inline-flex items-center gap-2 rounded-xl gradient-bg px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
             >
               <Edit size={16} /> Save changes
             </button>

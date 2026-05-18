@@ -129,7 +129,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                     key={q.id}
                     className="flex gap-3 rounded-xl bg-surface-2/40 border border-border/20 px-4 py-3"
                   >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white mt-0.5">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full gradient-bg text-[10px] font-bold text-white mt-0.5">
                       {i + 1}
                     </span>
                     <p className="text-sm text-text-secondary leading-relaxed">{q.text}</p>

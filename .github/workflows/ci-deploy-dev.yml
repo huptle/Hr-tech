@@ -6,6 +6,8 @@
 #   VPS_APP_PATH_DEV — e.g. /opt/portal/Hr-tech-dev
 #
 # Other secrets same as production (VPS_HOST, VPS_USER, VPS_SSH_KEY, GHCR_*).
+# Git fetch on the VPS uses GITHUB_TOKEN (workflow) — repo must allow Actions read access.
+# For private repos: Settings → Actions → General → Workflow permissions → Read and write.
 
 name: CI / Deploy dev
 
@@ -112,7 +114,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: VPS_APP_PATH,DEPLOY_BRANCH,DOCKER_IMAGE,GHCR_USER,GHCR_READ_TOKEN
+          envs: VPS_APP_PATH,DEPLOY_BRANCH,DOCKER_IMAGE,GHCR_USER,GHCR_READ_TOKEN,GITHUB_REPO,GIT_DEPLOY_TOKEN
           script: |
             set -e
             if [ -z "$VPS_APP_PATH" ]; then
@@ -120,6 +122,8 @@ jobs:
               exit 1
             fi
             cd "$VPS_APP_PATH"
+            # VPS clone is often https://github.com/... — non-interactive fetch needs a token.
+            git remote set-url origin "https://x-access-token:${GIT_DEPLOY_TOKEN}@github.com/${GITHUB_REPO}.git"
             git fetch origin
             git checkout "$DEPLOY_BRANCH"
             git reset --hard "origin/$DEPLOY_BRANCH"

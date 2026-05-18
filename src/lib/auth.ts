@@ -108,6 +108,7 @@ export type CurrentUser = {
   phone: string;
   initials: string;
   isAdmin: boolean;
+  googleConnected: boolean;
 };
 
 function initialsFor(name: string): string {
@@ -134,6 +135,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     phone: user.phone,
     initials: initialsFor(user.name),
     isAdmin: user.isAdmin,
+    googleConnected: Boolean(user.googleRefreshToken || user.googleAccessToken),
   };
 }
 

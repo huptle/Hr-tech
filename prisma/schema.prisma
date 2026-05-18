@@ -17,10 +17,14 @@ model HrUser {
   company      String     @default("")
   phone        String     @default("")
   isAdmin      Boolean    @default(false)
+  googleAccessToken  String @default("")
+  googleRefreshToken String @default("")
+  googleTokenExpiry  DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   activities   Activity[]
   templates    Template[]
+  schedulingCampaigns SchedulingCallCampaign[]
 }
 
 model Job {
@@ -38,6 +42,7 @@ model Job {
   questions            ScreeningQuestion[]
   slots                InterviewSlot[]
   activities           Activity[]
+  schedulingCampaigns  SchedulingCallCampaign[]
 }
 
 model ScreeningQuestion {
@@ -71,6 +76,7 @@ model Candidate {
   updatedAt             DateTime        @updatedAt
   bookedSlots           InterviewSlot[]
   activities            Activity[]
+  schedulingCalls       SchedulingCall[]
 }
 
 model InterviewSlot {
@@ -107,4 +113,34 @@ model Activity {
   jobId       String?
   job         Job?       @relation(fields: [jobId], references: [id], onDelete: SetNull)
   createdAt   DateTime   @default(now())
+}
+
+/** HR-initiated batch of Vapi calls to collect interview availability (India +91). */
+model SchedulingCallCampaign {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  actorId   String
+  actor     HrUser   @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  calls     SchedulingCall[]
+}
+
+model SchedulingCall {
+  id              String   @id @default(cuid())
+  campaignId      String
+  campaign        SchedulingCallCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  candidateId     String
+  candidate       Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  phoneE164       String
+  vapiCallId      String   @default("")
+  status          String   @default("queued")
+  transcript      String   @default("")
+  parsedAvailability String @default("")
+  bookedSlotId    String?
+  errorMessage    String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
