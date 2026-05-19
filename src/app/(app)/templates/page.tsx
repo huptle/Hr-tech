@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { scopeFromUser, templateWhereOwned } from "@/lib/hr-scope";
 import { Mail, FileCode, FileText, Layout, Trash2, Plus } from "lucide-react";
 import { createTemplate, deleteTemplate } from "@/app/actions/templates";
 
@@ -16,8 +17,10 @@ function iconForType(type: string) {
 }
 
 export default async function TemplatesPage() {
-  await requireUser();
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
   const templates = await prisma.template.findMany({
+    where: templateWhereOwned(scope),
     orderBy: { updatedAt: "desc" },
     include: { author: { select: { name: true } } },
   });

@@ -12,6 +12,7 @@ import { normalizeIndianPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { isVapiConfigured } from "@/lib/vapi";
 import { requireUser } from "@/lib/auth";
+import { jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader, Section } from "@/components/motion-wrappers";
@@ -28,8 +29,9 @@ type PageProps = { params: Promise<{ jobId: string }> };
 export default async function SchedulePage({ params }: PageProps) {
   const { jobId } = await params;
   const user = await requireUser();
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
+  const scope = scopeFromUser(user);
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, ...jobWhereOwned(scope) },
     include: {
       slots: {
         orderBy: { startsAt: "asc" },

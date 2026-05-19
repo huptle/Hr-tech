@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { Star, Trophy, ArrowRight, Briefcase, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pipeline · Huptle HR" };
 
 export default async function ShortlistPage() {
-  await requireUser();
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
 
   const jobsWithCandidates = await prisma.job.findMany({
-    where: { candidates: { some: {} } },
+    where: { ...jobWhereOwned(scope), candidates: { some: {} } },
     orderBy: { updatedAt: "desc" },
     include: {
       candidates: {

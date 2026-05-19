@@ -2,6 +2,8 @@ import { createCandidate, deleteCandidate } from "@/app/actions/candidates";
 import { updateJob } from "@/app/actions/jobs";
 import { runVoiceScreening } from "@/app/actions/screening";
 import { isGeminiConfigured } from "@/lib/gemini";
+import { requireUser } from "@/lib/auth";
+import { jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import {
@@ -34,8 +36,10 @@ type PageProps = { params: Promise<{ jobId: string }> };
 
 export default async function JobDetailPage({ params }: PageProps) {
   const { jobId } = await params;
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, ...jobWhereOwned(scope) },
     include: {
       questions: { orderBy: { order: "asc" } },
       candidates: { orderBy: { createdAt: "desc" } },

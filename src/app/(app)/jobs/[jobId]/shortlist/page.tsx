@@ -1,5 +1,7 @@
 import { markCandidateSelected } from "@/app/actions/candidates";
 import { isGeminiConfigured } from "@/lib/gemini";
+import { requireUser } from "@/lib/auth";
+import { jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { prisma } from "@/lib/prisma";
 import { ShortlistAiPanel } from "@/components/ai/shortlist-ai-panel";
 import { notFound } from "next/navigation";
@@ -23,8 +25,10 @@ type PageProps = { params: Promise<{ jobId: string }> };
 
 export default async function ShortlistPage({ params }: PageProps) {
   const { jobId } = await params;
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, ...jobWhereOwned(scope) },
     include: {
       candidates: {
         where: { rankScore: { not: null } },

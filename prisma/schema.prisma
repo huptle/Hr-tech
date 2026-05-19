@@ -25,6 +25,7 @@ model HrUser {
   activities   Activity[]
   templates    Template[]
   schedulingCampaigns SchedulingCallCampaign[]
+  createdJobs         Job[]                  @relation("JobCreator")
 }
 
 model Job {
@@ -36,6 +37,8 @@ model Job {
   dept                 String              @default("")
   location             String              @default("")
   mode                 String              @default("Remote")
+  createdById          String?
+  createdBy            HrUser?             @relation("JobCreator", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   candidates           Candidate[]

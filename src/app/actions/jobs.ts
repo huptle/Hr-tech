@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
+import { assertJobAccess, jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 
 function parseQuestionsFromForm(formData: FormData): string[] {
   const raw = String(formData.get("questionsJson") ?? "").trim();
@@ -45,6 +46,7 @@ export async function createJob(formData: FormData) {
       location,
       mode,
       status,
+      createdById: user.id,
       questions: {
         create: questionTexts.map((text, order) => ({
           order,
@@ -67,7 +69,8 @@ export async function createJob(formData: FormData) {
 }
 
 export async function updateJob(jobId: string, formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const durationRaw = String(formData.get("screeningDurationMin") ?? "15");
@@ -102,7 +105,12 @@ export async function updateJob(jobId: string, formData: FormData) {
 
 export async function deleteJob(jobId: string) {
   const user = await requireUser();
-  const job = await prisma.job.findUnique({ where: { id: jobId }, select: { title: true } });
+  const scope = scopeFromUser(user);
+  await assertJobAccess(jobId, scope);
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, ...jobWhereOwned(scope) },
+    select: { title: true },
+  });
   await prisma.job.delete({ where: { id: jobId } });
   await logActivity({
     tag: "job",

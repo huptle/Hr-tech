@@ -6,11 +6,13 @@ import { logActivity } from "@/lib/activity";
 import { isGoogleCalendarConfigured } from "@/lib/google-calendar";
 import { normalizeIndianPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
+import { assertJobAccess, jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { createVapiSchedulingCall, isVapiConfigured } from "@/lib/vapi";
 
 /** Shortlisted = has screening score (same as schedule page pool). */
 export async function getShortlistedCallableCandidates(jobId: string) {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   const candidates = await prisma.candidate.findMany({
     where: {
       jobId,
@@ -40,6 +42,8 @@ export async function startAiSchedulingCalls(
   candidateIds: string[],
 ): Promise<{ ok: boolean; message: string; campaignId?: string }> {
   const user = await requireUser();
+  const scope = scopeFromUser(user);
+  await assertJobAccess(jobId, scope);
 
   if (!isVapiConfigured()) {
     return {
@@ -67,7 +71,9 @@ export async function startAiSchedulingCalls(
     return { ok: false, message: "Select at least one candidate." };
   }
 
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, ...jobWhereOwned(scope) },
+  });
   if (!job) return { ok: false, message: "Job not found." };
 
   const candidates = await prisma.candidate.findMany({
@@ -156,7 +162,8 @@ export async function startAiSchedulingCalls(
 }
 
 export async function getSchedulingCampaignStatus(jobId: string) {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   const campaigns = await prisma.schedulingCallCampaign.findMany({
     where: { jobId },
     orderBy: { createdAt: "desc" },

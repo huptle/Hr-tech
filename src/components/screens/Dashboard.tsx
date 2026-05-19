@@ -246,6 +246,8 @@ export type DashboardProps = {
   stats: DashboardStats;
   funnel: DashboardFunnel;
   weekly: DashboardWeekly;
+  /** "mine" = signed-in HR only; "all" = admins see every HR's actions */
+  activityScope?: "mine" | "all";
 };
 
 export function Dashboard({
@@ -257,6 +259,7 @@ export function Dashboard({
   stats,
   funnel,
   weekly,
+  activityScope = "mine",
 }: DashboardProps) {
   const [showPremium, setShowPremium] = useState(false);
 
@@ -436,10 +439,14 @@ export function Dashboard({
             <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center">
               <MessageSquare size={16} />
             </div>
-            <h2 className="text-sm font-bold text-text-primary">Recent activity</h2>
+            <h2 className="text-sm font-bold text-text-primary">
+              {activityScope === "all" ? "Recent activity (all HR)" : "Your recent activity"}
+            </h2>
           </div>
           {activity.length === 0 ? (
-            <p className="text-xs text-text-muted py-6 text-center">No activity yet.</p>
+            <p className="text-xs text-text-muted py-6 text-center">
+              {activityScope === "all" ? "No activity yet." : "No activity from you yet."}
+            </p>
           ) : (
             <div className="flex flex-col">
               {activity.map((a, i) => <ActivityRow key={i} a={a} />)}

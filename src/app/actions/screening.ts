@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { runGeminiVoiceScreening } from "./ai";
 import { requireUser } from "@/lib/auth";
+import { assertJobAccess, scopeFromUser } from "@/lib/hr-scope";
 
 /** Random scores when no Gemini key — keeps UI usable. */
 async function simulateVoiceScreeningFallback(jobId: string) {
@@ -33,7 +34,8 @@ async function simulateVoiceScreeningFallback(jobId: string) {
  * Uses Gemini when `GEMINI_API_KEY` is set; otherwise simulates scores.
  */
 export async function runVoiceScreening(jobId: string) {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   if (isGeminiConfigured()) {
     await runGeminiVoiceScreening(jobId);
   } else {

@@ -1,4 +1,6 @@
 import { AsyncScreeningForm } from "./async-screen-form";
+import { requireUser } from "@/lib/auth";
+import { candidateWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/motion-wrappers";
@@ -10,8 +12,10 @@ type PageProps = { params: Promise<{ jobId: string; candidateId: string }> };
 
 export default async function AsyncScreenPage({ params }: PageProps) {
   const { jobId, candidateId } = await params;
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
   const cand = await prisma.candidate.findFirst({
-    where: { id: candidateId, jobId },
+    where: { id: candidateId, jobId, ...candidateWhereOwned(scope) },
     include: {
       job: {
         include: { questions: { orderBy: { order: "asc" } } },
