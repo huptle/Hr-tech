@@ -1,5 +1,0 @@
-flowchart TD
-  U[HR user logs in]
-  U --> Q{isAdmin?}
-  Q -->|yes| ALL[All jobs candidates templates activity]
-  Q -->|no| OWN[Only jobs where createdById = user + related data]
