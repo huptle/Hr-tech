@@ -1,230 +1,0 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <title>Huptle Application Guide</title>
-  <style>
-    @page { margin: 18mm 14mm; size: A4; }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      font-size: 11pt;
-      line-height: 1.45;
-      color: #1a1a2e;
-      margin: 0;
-      padding: 0 4mm;
-    }
-    h1 { font-size: 22pt; color: #3f64ba; border-bottom: 2px solid #3f64ba; padding-bottom: 8px; page-break-after: avoid; }
-    h2 { font-size: 14pt; color: #2d4a8a; margin-top: 22px; page-break-after: avoid; }
-    h3 { font-size: 12pt; page-break-after: avoid; }
-    p, li { margin: 6px 0; }
-    code { background: #f0f4ff; padding: 1px 5px; border-radius: 4px; font-size: 9.5pt; }
-    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; page-break-inside: avoid; }
-    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-    th { background: #eef2ff; }
-    figure.diagram {
-      margin: 18px 0 24px;
-      page-break-inside: avoid;
-      text-align: center;
-    }
-    figure.diagram img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-    hr { border: none; border-top: 1px solid #ddd; margin: 20px 0; }
-    .cover {
-      text-align: center;
-      padding: 60px 20px 40px;
-      page-break-after: always;
-    }
-    .cover h1 { border: none; font-size: 28pt; }
-    .cover p { color: #555; font-size: 12pt; }
-  </style>
-</head>
-<body>
-  <div class="cover">
-    <h1>Huptle HR Platform</h1>
-    <p>Application architecture, flows, and feature map</p>
-    <p><strong>HR Portal + Candidate Apply Portal</strong></p>
-    <p style="margin-top:40px;font-size:10pt;color:#888;">Generated from Huptle HR-tech repository</p>
-  </div>
-  <h1>Huptle HR + Candidate Apply — Application Guide</h1>
-
-<p><strong>Version:</strong> As of May 2026  </p>
-<p><strong>Stack:</strong> Next.js HR portal, Next.js apply portal, PostgreSQL, Docker on VPS, GitHub Actions → GHCR</p>
-
-<hr/>
-
-<h2>1. System overview</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-01.png" alt="Diagram 1"/></figure>
-
-
-<table>
-<tr><th>Layer</th><th>Role</th></tr>
-<tr><td><strong>HR portal</strong> (<code>app</code>)</td><td>Jobs, candidates, screening, scheduling, reports, templates</td></tr>
-<tr><td><strong>Apply portal</strong> (<code>apply</code>)</td><td>Resume upload, parse, Supabase profile; syncs to HR</td></tr>
-<tr><td><strong>Postgres</strong></td><td>Single source of truth for HR data</td></tr>
-<tr><td><strong>CI/CD</strong></td><td>Build both images → GHCR → VPS <code>docker compose pull</code></td></tr>
-</table>
-
-<hr/>
-
-<h2>2. Who sees what</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-02.png" alt="Diagram 2"/></figure>
-
-
-<p><strong>Notes:</strong></p>
-
-<li>Candidates do <strong>not</strong> browse all HR jobs — they need a job-specific link (<code>?job=…</code>).</li>
-<li>HR does <strong>not</strong> use Supabase directly — apply portal syncs parsed data into Postgres.</li>
-
-<hr/>
-
-<h2>3. HR portal — features by menu</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-03.png" alt="Diagram 3"/></figure>
-
-
-<hr/>
-
-<h2>4. End-to-end hiring pipeline</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-04.png" alt="Diagram 4"/></figure>
-
-
-<p><strong>Candidate journey states</strong> (<code>Candidate.journey</code>):</p>
-
-<p><code>Applied</code> → <code>Shortlisted</code> → <code>Round 1</code> / <code>Round 2</code> / <code>Round 3</code> → <code>Offer Sent</code> → <code>Offer Accepted</code></p>
-
-<hr/>
-
-<h2>5. AI (Gemini) touchpoints</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-05.png" alt="Diagram 5"/></figure>
-
-
-<p>Without <code>GEMINI_API_KEY</code>, voice screening uses <strong>simulated random scores</strong> so the UI remains usable.</p>
-
-<hr/>
-
-<h2>6. Apply portal (candidate) flows</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-06.png" alt="Diagram 6"/></figure>
-
-
-<p><strong>Pages:</strong> apply home (<code>/?job=</code>), parsed profile (<code>/profile</code>). OTP APIs exist (<code>/api/otp/send</code>, <code>/api/otp/verify</code>).</p>
-
-<hr/>
-
-<h2>7. Integrations and webhooks</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-07.png" alt="Diagram 7"/></figure>
-
-
-<table>
-<tr><th>Integration</th><th>Check</th><th>Configuration</th></tr>
-<tr><td>Gemini</td><td><code>GET /api/integrations/status</code></td><td><code>GEMINI_API_KEY</code>, <code>GEMINI_MODEL</code></td></tr>
-<tr><td>Vapi</td><td>same</td><td><code>VAPI_*</code>, public HTTPS webhook URL</td></tr>
-<tr><td>Google Calendar</td><td>same</td><td>OAuth; requires HTTPS domain</td></tr>
-<tr><td>Email send</td><td><code>not_configured</code></td><td>Drafts only — no SMTP wired</td></tr>
-<tr><td>Candidate sync</td><td>env on both services</td><td><code>CANDIDATE_SYNC_SECRET</code>, <code>HR_PORTAL_INTERNAL_URL</code></td></tr>
-</table>
-
-<hr/>
-
-<h2>8. Data model (core entities)</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-08.png" alt="Diagram 8"/></figure>
-
-
-<p><strong>Candidate uniqueness:</strong> <code>@@unique([jobId, email])</code> — re-apply with same email updates the row.</p>
-
-<hr/>
-
-<h2>9. Access control</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-09.png" alt="Diagram 9"/></figure>
-
-
-<hr/>
-
-<h2>10. Deploy flow (production)</h2>
-
-
-<figure class="diagram"><img src="diagrams/diagram-10.png" alt="Diagram 10"/></figure>
-
-
-<p><strong>Typical ports:</strong> HR <code>3000</code>, Apply <code>3002</code>, dev HR <code>3001</code>.</p>
-
-<hr/>
-
-<h2>11. URL reference</h2>
-
-<table>
-<tr><th>App</th><th>Path</th><th>Purpose</th></tr>
-<tr><td>HR</td><td><code>/</code></td><td>Dashboard + copilot</td></tr>
-<tr><td>HR</td><td><code>/jobs</code>, <code>/jobs/[id]</code></td><td>Jobs, candidates, apply link</td></tr>
-<tr><td>HR</td><td><code>/jobs/[id]/shortlist</code></td><td>Job shortlist</td></tr>
-<tr><td>HR</td><td><code>/jobs/[id]/schedule</code></td><td>Slots + Vapi panel</td></tr>
-<tr><td>HR</td><td><code>/jobs/[id]/async-screen/[candidateId]</code></td><td>Text screening</td></tr>
-<tr><td>HR</td><td><code>/shortlist</code></td><td>Global pipeline</td></tr>
-<tr><td>HR</td><td><code>/schedule</code></td><td>Global calendar</td></tr>
-<tr><td>HR</td><td><code>/templates</code></td><td>Email templates</td></tr>
-<tr><td>HR</td><td><code>/reports</code></td><td>Analytics</td></tr>
-<tr><td>HR</td><td><code>/profile</code></td><td>Settings + Google connect</td></tr>
-<tr><td>HR</td><td><code>/signin</code>, <code>/signup</code></td><td>Auth</td></tr>
-<tr><td>Apply</td><td><code>/?job=</code></td><td>Apply form</td></tr>
-<tr><td>Apply</td><td><code>/profile</code></td><td>Parsed resume view</td></tr>
-</table>
-
-<hr/>
-
-<h2>12. Environment variables (summary)</h2>
-
-<h3>HR portal (<code>app</code>)</h3>
-
-<li><code>DATABASE_URL</code>, <code>AUTH_SECRET</code></li>
-<li><code>GEMINI_API_KEY</code>, <code>GEMINI_MODEL</code> (e.g. <code>gemini-2.5-flash</code>)</li>
-<li><code>CANDIDATE_SYNC_SECRET</code>, <code>NEXT_PUBLIC_APPLY_URL</code></li>
-<li><code>VAPI_*</code> (API key, assistant, phone, webhook secret)</li>
-<li><code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, <code>NEXT_PUBLIC_APP_URL</code></li>
-<li><code>DOCKER_IMAGE</code> (set by CI on VPS)</li>
-
-<h3>Apply portal (<code>apply</code>)</h3>
-
-<li><code>GEMINI_API_KEY</code>, Supabase URL + anon key</li>
-<li><code>CANDIDATE_SYNC_SECRET</code></li>
-<li><code>HR_PORTAL_INTERNAL_URL=http://app:3000</code> (Docker)</li>
-<li><code>APPLY_DOCKER_IMAGE</code> (set by CI on VPS)</li>
-
-<hr/>
-
-<h2>13. Candidate apply sequence (detailed)</h2>
-
-<p>1. HR creates job (Live or Draft).</p>
-<p>2. HR copies apply link: <code>{NEXT_PUBLIC_APPLY_URL}/?job={jobId}</code>.</p>
-<p>3. Candidate uploads PDF; Gemini parses skills, experience, contact info.</p>
-<p>4. File stored in Supabase; profile row created.</p>
-<p>5. Apply service POSTs to <code>http://app:3000/api/integrations/candidate-apply</code> with Bearer secret.</p>
-<p>6. HR upserts <code>Candidate</code> on that <code>jobId</code>; activity logged for job owner.</p>
-<p>7. HR runs voice or async screening, shortlists, schedules (manual or Vapi + Calendar).</p>
-
-<hr/>
-
-<p>*Generated from the Huptle HR-tech repository. Re-export this PDF after major feature changes.*</p>
-
-
-</body>
-</html>
