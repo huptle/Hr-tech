@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApplyPortalHeader } from "@/components/apply-portal-header";
 import { JobCard } from "@/components/job-card";
 import { useCandidateStore } from "@/store/useCandidateStore";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/link-button";
 import type { PublicJobListing } from "@/server/services/hr-portal.service";
 
 export default function MatchResultsPage() {
@@ -53,9 +52,7 @@ export default function MatchResultsPage() {
             <p className="text-muted-foreground">
               No recommendations returned. Browse all jobs instead.
             </p>
-            <Button asChild>
-              <Link href="/jobs">View all jobs</Link>
-            </Button>
+            <LinkButton href="/jobs">View all jobs</LinkButton>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -70,9 +67,9 @@ export default function MatchResultsPage() {
                     <h3 className="font-bold">{rec.title}</h3>
                     <p className="text-sm text-primary mt-2">{rec.matchScore}% match</p>
                     <p className="text-sm text-muted-foreground mt-2">{rec.reason}</p>
-                    <Button asChild className="mt-4">
-                      <Link href={`/?job=${rec.jobId}`}>Apply</Link>
-                    </Button>
+                    <LinkButton href={`/?job=${rec.jobId}`} className="mt-4">
+                      Apply
+                    </LinkButton>
                   </article>
                 );
               }
@@ -89,9 +86,9 @@ export default function MatchResultsPage() {
         )}
 
         <div className="mt-12 text-center">
-          <Button variant="outline" asChild>
-            <Link href="/jobs">See all open jobs</Link>
-          </Button>
+          <LinkButton href="/jobs" variant="outline">
+            See all open jobs
+          </LinkButton>
         </div>
       </main>
     </div>

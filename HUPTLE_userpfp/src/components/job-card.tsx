@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { MapPin, Building2, Clock } from "lucide-react";
 import type { PublicJobListing } from "@/server/services/hr-portal.service";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/link-button";
 
 type Props = {
   job: PublicJobListing;
@@ -55,12 +54,12 @@ export function JobCard({ job, matchScore, matchReason }: Props) {
       </p>
 
       <div className="flex gap-2 pt-1">
-        <Button asChild className="flex-1">
-          <Link href={`/?job=${job.id}`}>Apply now</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href={`/jobs/${job.id}`}>Details</Link>
-        </Button>
+        <LinkButton href={`/?job=${job.id}`} className="flex-1">
+          Apply now
+        </LinkButton>
+        <LinkButton href={`/jobs/${job.id}`} variant="outline">
+          Details
+        </LinkButton>
       </div>
     </article>
   );

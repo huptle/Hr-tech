@@ -4,7 +4,7 @@ import { ApplyPortalHeader } from "@/components/apply-portal-header";
 import { ApplyForm } from "./apply-form";
 import { JobCard } from "@/components/job-card";
 import { fetchPublicJobsFromHr } from "@/server/services/hr-portal.service";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/link-button";
 
 type PageProps = {
   searchParams: Promise<{ job?: string }>;
@@ -28,9 +28,9 @@ export default async function Home({ searchParams }: PageProps) {
       <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
         <ApplyPortalHeader />
         <main className="flex-1 container mx-auto px-6 md:px-12 lg:px-20 py-12 max-w-xl">
-          <Button variant="ghost" asChild className="mb-6 -ml-2">
-            <Link href="/">← Back to job board</Link>
-          </Button>
+          <LinkButton href="/" variant="ghost" className="mb-6 -ml-2">
+            ← Back to job board
+          </LinkButton>
           {selectedJob ? (
             <ApplyForm jobId={jobId} jobTitle={selectedJob.title} />
           ) : (
@@ -59,18 +59,19 @@ export default async function Home({ searchParams }: PageProps) {
             Browse open positions, upload your resume for AI-powered job matches, and apply in one flow.
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
-            <Button asChild size="lg">
-              <Link href="/jobs" className="inline-flex items-center gap-2">
-                <Briefcase className="w-4 h-4" />
-                Browse all jobs
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/match" className="inline-flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Get AI recommendations
-              </Link>
-            </Button>
+            <LinkButton href="/jobs" size="lg" className="inline-flex items-center gap-2">
+              <Briefcase className="w-4 h-4" />
+              Browse all jobs
+            </LinkButton>
+            <LinkButton
+              href="/match"
+              size="lg"
+              variant="outline"
+              className="inline-flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Get AI recommendations
+            </LinkButton>
           </div>
         </section>
 

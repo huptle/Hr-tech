@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { ApplyPortalHeader } from "@/components/apply-portal-header";
 import { JobCard } from "@/components/job-card";
 import { fetchPublicJobsFromHr } from "@/server/services/hr-portal.service";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/link-button";
 import { Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +29,14 @@ export default async function JobsPage() {
                 : "Browse roles published by our HR team."}
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/match" className="inline-flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              Match my resume
-            </Link>
-          </Button>
+          <LinkButton
+            href="/match"
+            variant="outline"
+            className="inline-flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Match my resume
+          </LinkButton>
         </div>
 
         {loadError ? (

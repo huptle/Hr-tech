@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ApplyPortalHeader } from "@/components/apply-portal-header";
 import { ApplyForm } from "@/app/apply-form";
 import { fetchPublicJobsFromHr } from "@/server/services/hr-portal.service";
-import { Button } from "@/components/ui/button";
+import { LinkButton } from "@/components/link-button";
 import { ArrowLeft, MapPin, Building2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -27,12 +27,14 @@ export default async function JobDetailPage({ params }: PageProps) {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <ApplyPortalHeader />
       <main className="container mx-auto px-6 md:px-12 lg:px-20 py-12">
-        <Button variant="ghost" asChild className="mb-6 -ml-2">
-          <Link href="/jobs" className="inline-flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            All jobs
-          </Link>
-        </Button>
+        <LinkButton
+          href="/jobs"
+          variant="ghost"
+          className="mb-6 -ml-2 inline-flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          All jobs
+        </LinkButton>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           <div className="space-y-6">
