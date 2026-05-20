@@ -139,19 +139,29 @@ type ScreeningBatch = {
   }>;
 };
 
-export async function runGeminiVoiceScreening(jobId: string) {
+export async function runGeminiVoiceScreening(
+  jobId: string,
+  rescoreAll = false,
+): Promise<{ ok: boolean; message: string }> {
   requireGemini();
   await guardJob(jobId);
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     include: {
       questions: { orderBy: { order: "asc" } },
-      candidates: { where: { rankScore: null } },
+      candidates: rescoreAll
+        ? { orderBy: { createdAt: "asc" } }
+        : { where: { rankScore: null }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!job) throw new Error("Job not found");
   if (job.candidates.length === 0) {
-    return { ok: true, message: "No unscored candidates." };
+    return {
+      ok: false,
+      message: rescoreAll
+        ? "No candidates on this job."
+        : "No unscored candidates. Use “Re-run screening” to refresh all scores with Gemini.",
+    };
   }
 
   const qText = job.questions.map((q, i) => `${i + 1}. ${q.text}`).join("\n");

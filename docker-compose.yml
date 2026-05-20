@@ -22,18 +22,52 @@ services:
     # Locally you can run `docker compose --profile build up --build` to build from source instead.
     image: ${DOCKER_IMAGE:-hr-tech:local}
     restart: unless-stopped
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      AUTH_SECRET: ${AUTH_SECRET}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-}
       NODE_ENV: production
       PORT: "3000"
     ports:
       - "${APP_PORT:-3000}:3000"
+    networks:
+      - hrnet
+
+  # Candidate apply portal (HUPTLE_userpfp) — port 3002 by default
+  apply:
+    image: ${APPLY_DOCKER_IMAGE:-huptle-apply:local}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - app
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HR_PORTAL_INTERNAL_URL: http://app:3000
+    ports:
+      - "${APPLY_PORT:-3002}:3000"
+    networks:
+      - hrnet
+
+  apply-build:
+    profiles: ["apply-build"]
+    build:
+      context: ./HUPTLE_userpfp
+      dockerfile: Dockerfile
+    image: huptle-apply:local
+    env_file:
+      - .env
+    depends_on:
+      - app-build
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HR_PORTAL_INTERNAL_URL: http://app-build:3000
+    ports:
+      - "${APPLY_PORT:-3002}:3000"
     networks:
       - hrnet
 

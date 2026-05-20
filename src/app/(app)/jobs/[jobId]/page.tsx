@@ -1,6 +1,6 @@
 import { createCandidate, deleteCandidate } from "@/app/actions/candidates";
 import { updateJob } from "@/app/actions/jobs";
-import { runVoiceScreening } from "@/app/actions/screening";
+import { VoiceScreeningPanel } from "@/components/jobs/voice-screening-panel";
 import { isGeminiConfigured } from "@/lib/gemini";
 import { requireUser } from "@/lib/auth";
 import { jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
@@ -17,7 +17,6 @@ import {
   PageLayout,
   SectionCard,
   SectionCardHeader,
-  BtnPrimary,
   BtnDanger,
   LinkBtnSecondary,
   Breadcrumb,
@@ -25,7 +24,7 @@ import {
 } from "@/components/ui/primitives";
 import Link from "next/link";
 import {
-  Users, FileText, Mic, Calendar, Star,
+  Users, FileText, Calendar, Star,
   Trash2, Settings2, MessageSquare, PenLine,
 } from "lucide-react";
 import { AddCandidateModal, JobSettingsModal } from "../components";
@@ -54,6 +53,8 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   const geminiReady = isGeminiConfigured();
   const pendingScreening = job.candidates.filter((c) => c.rankScore === null);
+  const applyBase = process.env.NEXT_PUBLIC_APPLY_URL?.replace(/\/$/, "") ?? "";
+  const applyLink = applyBase ? `${applyBase}/?job=${job.id}` : "";
 
   return (
     <PageWrapper>
@@ -107,8 +108,21 @@ export default async function JobDetailPage({ params }: PageProps) {
                 />
               }
             />
-            <div className="p-6">
+            <div className="p-6 space-y-4">
               <p className="text-sm text-text-secondary whitespace-pre-wrap">{job.description || "No description provided."}</p>
+              {applyLink ? (
+                <div className="rounded-xl border border-accent/25 bg-accent/5 px-4 py-3 text-sm">
+                  <p className="font-semibold text-text-primary mb-1">Candidate apply link</p>
+                  <p className="text-xs text-text-muted break-all font-mono">{applyLink}</p>
+                  <p className="text-xs text-text-muted mt-2">
+                    Share this URL so applicants upload a resume; they appear under Candidates automatically.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">
+                  Set NEXT_PUBLIC_APPLY_URL in server env (e.g. http://your-ip:3002) to show a public apply link.
+                </p>
+              )}
             </div>
           </SectionCard>
         </Section>
@@ -147,31 +161,12 @@ export default async function JobDetailPage({ params }: PageProps) {
         {/* AI Screening */}
         <Section delay={0.15}>
           <SectionCard>
-            <div className="flex items-center gap-3 border-b border-border/30 px-6 py-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15">
-                <Mic className="h-4 w-4 text-accent" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-sm font-semibold text-text-primary">
-                  {geminiReady ? "AI screening (Gemini)" : "AI screening (simulated)"}
-                </h2>
-                <p className="text-xs text-text-muted mt-0.5">
-                  {geminiReady
-                    ? pendingScreening.length > 0
-                      ? `${pendingScreening.length} candidate(s) ready for Gemini scoring from resume + JD context.`
-                      : "Everyone has a score — new imports can be scored again."
-                    : pendingScreening.length > 0
-                      ? `${pendingScreening.length} candidate(s) still need a screening score (set GEMINI_API_KEY for real scoring).`
-                      : "Everyone has a score — re-run only affects new imports."}
-                </p>
-              </div>
-              <form action={runVoiceScreening.bind(null, job.id)}>
-                <BtnPrimary type="submit" className="py-2 text-xs px-4">
-                  <Mic className="h-3.5 w-3.5" />
-                  Run screening
-                </BtnPrimary>
-              </form>
-            </div>
+            <VoiceScreeningPanel
+              jobId={job.id}
+              pendingCount={pendingScreening.length}
+              totalCandidates={job.candidates.length}
+              geminiReady={geminiReady}
+            />
           </SectionCard>
         </Section>
 

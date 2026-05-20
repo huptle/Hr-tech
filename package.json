@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "docs:pdf": "node scripts/generate-architecture-pdf.mjs",
     "dev": "prisma generate && next dev --webpack",
     "build": "prisma generate && next build --webpack",
     "start": "next start",

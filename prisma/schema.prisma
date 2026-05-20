@@ -75,8 +75,16 @@ model Candidate {
   aiSummary             String          @default("")
   /** JSON array: { "question": string, "answer": string }[] for async text screening. */
   asyncScreeningAnswers String          @default("")
+  /** Public URL of uploaded resume (e.g. Supabase Storage). */
+  resumeUrl             String          @default("")
+  /** Supabase profiles.id or other external portal id. */
+  externalProfileId     String          @default("")
+  /** Full parsed resume JSON from candidate apply portal. */
+  parsedDataJson        String          @default("")
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+
+  @@unique([jobId, email])
   bookedSlots           InterviewSlot[]
   activities            Activity[]
   schedulingCalls       SchedulingCall[]
