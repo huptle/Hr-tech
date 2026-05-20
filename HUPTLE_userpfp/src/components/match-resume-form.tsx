@@ -42,7 +42,7 @@ export function MatchResumeForm() {
         skills: parsed.userInfo.skills,
         experience: "",
         education: "",
-        summary: parsed.userInfo.summary,
+        summary: parsed.userInfo.summary ?? undefined,
         resumeUrl: data.data.resumeUrl,
         parsed_data: parsed,
       });
