@@ -70,7 +70,7 @@ export function AsyncScreeningForm({
         ) : (
           <Send className="h-4 w-4" />
         )}
-        Submit for Gemini scoring
+        Submit for AI scoring
       </BtnPrimary>
     </form>
   );

@@ -46,7 +46,7 @@ export default async function SchedulePage({ params }: PageProps) {
 
   if (!job) notFound();
 
-  const geminiReady = isGeminiConfigured();
+  const aiReady = isGeminiConfigured();
   const vapiReady = isVapiConfigured();
   const googleConnected = user.googleConnected;
 
@@ -87,9 +87,9 @@ export default async function SchedulePage({ params }: PageProps) {
                 </h1>
                 <p className="mt-1.5 text-sm text-text-secondary">
                   Offer HR or AI interviews; assign candidates.
-                  {geminiReady
-                    ? " Gemini can draft emails below; wire Resend/SendGrid to send."
-                    : " Add GEMINI_API_KEY for AI-drafted invite/reject/offer emails."}
+                  {aiReady
+                    ? " AI can draft emails below; wire Resend/SendGrid to send."
+                    : " Configure AI on the server for drafted invite/reject/offer emails."}
                 </p>
               </div>
               <Link
@@ -284,7 +284,7 @@ export default async function SchedulePage({ params }: PageProps) {
                         </p>
                       )}
 
-                      {geminiReady && slot.candidateId && slot.candidate && (
+                      {aiReady && slot.candidateId && slot.candidate && (
                         <ScheduleSlotEmailDrafts
                           jobId={job.id}
                           slotId={slot.id}

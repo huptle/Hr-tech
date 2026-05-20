@@ -1,12 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  upsertCandidateFromApply,
-  type CandidateApplyPayload,
-} from "@/lib/candidate-apply-sync";
-import {
   authorizeIntegrationRequest,
   isIntegrationSecretConfigured,
 } from "@/lib/integration-auth";
+import { recommendJobsForCandidate } from "@/lib/public-jobs";
 
 export const runtime = "nodejs";
 
@@ -22,19 +19,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: CandidateApplyPayload;
+  let body: {
+    email?: string;
+    name?: string;
+    summary?: string;
+    skills?: string[];
+    location?: string;
+    parsedData?: unknown;
+    limit?: number;
+  };
+
   try {
-    body = (await req.json()) as CandidateApplyPayload;
+    body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   try {
-    const result = await upsertCandidateFromApply(body);
-    return NextResponse.json({ ok: true, ...result });
+    const limit = Math.min(15, Math.max(1, Number(body.limit) || 8));
+    const recommendations = await recommendJobsForCandidate(body, limit);
+    return NextResponse.json({ ok: true, recommendations });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Sync failed";
-    const status = message.includes("not found") ? 404 : 400;
-    return NextResponse.json({ error: message }, { status });
+    const message = e instanceof Error ? e.message : "Recommendation failed";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

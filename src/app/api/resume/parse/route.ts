@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
   if (!isGeminiConfigured()) {
     return NextResponse.json(
       {
-        error: "Gemini is not configured",
+        error: "AI is not configured",
         hint: "Set GEMINI_API_KEY on the server to enable resume parsing.",
       },
       { status: 503 },

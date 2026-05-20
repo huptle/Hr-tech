@@ -42,7 +42,7 @@ export function ScheduleSlotEmailDrafts({
     <div className="mt-3 rounded-xl border border-white/8 bg-black/20 p-3 space-y-2">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted flex items-center gap-1">
         <Mail className="h-3 w-3" />
-        Gemini email drafts (copy only — not sent)
+        AI email drafts (copy only — not sent)
       </p>
       <div className="flex flex-wrap gap-2">
         <BtnSecondary

@@ -17,7 +17,7 @@ const ModernLoader = () => (
   </svg>
 );
 
-export function ApplyForm({ jobId }: { jobId: string }) {
+export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle?: string }) {
   const router = useRouter();
   const { email, setEmail, file, setFile, setProfile } = useCandidateStore();
   const [isLoading, setIsLoading] = useState(false);
@@ -71,9 +71,17 @@ export function ApplyForm({ jobId }: { jobId: string }) {
         >
           <form onSubmit={handleSubmitProcess}>
             <CardHeader className="pb-6 pt-8 px-8 border-b border-border/40 bg-muted/20">
-              <CardTitle className="text-2xl">Apply for this role</CardTitle>
+              <CardTitle className="text-2xl">
+                {jobTitle ? `Apply: ${jobTitle}` : "Apply for this role"}
+              </CardTitle>
               <CardDescription className="text-base text-muted-foreground">
-                Job reference: <span className="font-mono text-xs">{jobId}</span>
+                {jobTitle ? (
+                  <>Submit your resume for this opening.</>
+                ) : (
+                  <>
+                    Job reference: <span className="font-mono text-xs">{jobId}</span>
+                  </>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8 pt-8 px-8">

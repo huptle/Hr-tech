@@ -36,7 +36,7 @@ export default async function AsyncScreenPage({ params }: PageProps) {
             Async text screening
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            {cand.name} — answer each question; Gemini scores and updates the candidate
+            {cand.name} — answer each question; AI scores and updates the candidate
             profile (same fields as voice screening).
           </p>
         </PageLayout>

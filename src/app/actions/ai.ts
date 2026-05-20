@@ -24,7 +24,7 @@ async function guardJob(jobId: string) {
 function requireGemini() {
   if (!isGeminiConfigured()) {
     throw new Error(
-      "Gemini is not configured. Add GEMINI_API_KEY to .env.local and restart the dev server.",
+      "AI is not configured. Add GEMINI_API_KEY to .env.local and restart the dev server.",
     );
   }
 }
@@ -160,7 +160,7 @@ export async function runGeminiVoiceScreening(
       ok: false,
       message: rescoreAll
         ? "No candidates on this job."
-        : "No unscored candidates. Use “Re-run screening” to refresh all scores with Gemini.",
+        : "No unscored candidates. Use “Re-run screening” to refresh all scores with AI.",
     };
   }
 
@@ -217,7 +217,7 @@ Include every candidate id exactly once.`;
     });
   }
 
-  return { ok: true, message: `Scored ${job.candidates.length} candidate(s) with Gemini.` };
+  return { ok: true, message: `Scored ${job.candidates.length} candidate(s) with AI.` };
 }
 
 // ─── Shortlist: compare top candidates ───────────────────────────────────────

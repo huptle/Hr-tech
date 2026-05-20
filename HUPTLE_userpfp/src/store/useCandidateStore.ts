@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { ResumeData } from '@/server/services/resume.types';
+import type { JobRecommendation } from '@/server/services/hr-portal.service';
 
 interface CandidateProfile {
   name: string;
@@ -26,6 +27,8 @@ interface CandidateStore {
   setFile: (file: File | null) => void;
   profile: CandidateProfile | null;
   setProfile: (profile: CandidateProfile | null) => void;
+  recommendations: JobRecommendation[];
+  setRecommendations: (items: JobRecommendation[]) => void;
   reset: () => void;
 }
 
@@ -42,6 +45,8 @@ export const useCandidateStore = create<CandidateStore>((set) => ({
   setFile: (file) => set({ file }),
   profile: null,
   setProfile: (profile) => set({ profile }),
+  recommendations: [],
+  setRecommendations: (recommendations) => set({ recommendations }),
   reset: () => set({
     email: '',
     otp: '',
@@ -49,5 +54,6 @@ export const useCandidateStore = create<CandidateStore>((set) => ({
     isVerified: false,
     file: null,
     profile: null,
+    recommendations: [],
   }),
 }));

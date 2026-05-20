@@ -23,7 +23,7 @@ export async function parseAvailabilityFromTranscript(
   candidateName: string,
 ): Promise<ParsedAvailability> {
   if (!isGeminiConfigured()) {
-    return { slots: [], notes: "Gemini not configured; could not parse transcript." };
+    return { slots: [], notes: "AI not configured; could not parse transcript." };
   }
 
   const prompt = `You parse phone call transcripts for HR interview scheduling (India Standard Time, Asia/Kolkata).

@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
 export default async function JobsPage() {
   const user = await requireUser();
   const scope = scopeFromUser(user);
-  const geminiReady = isGeminiConfigured();
+  const aiReady = isGeminiConfigured();
   const jobs = await prisma.job.findMany({
     where: jobWhereOwned(scope),
     orderBy: { updatedAt: "desc" },
@@ -57,7 +57,7 @@ export default async function JobsPage() {
               </p>
             </div>
             <div className="shrink-0 mt-2 sm:mt-0">
-              <CreateJobFormModal action={createJob} geminiReady={geminiReady} />
+              <CreateJobFormModal action={createJob} aiReady={aiReady} />
             </div>
           </div>
         </PageLayout>

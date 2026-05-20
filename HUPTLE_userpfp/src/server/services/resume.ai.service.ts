@@ -94,14 +94,14 @@ export async function parseWorkExperienceWithAI(
     parsed = JSON.parse(cleaned);
   } catch {
     throw new Error(
-      `Gemini returned invalid JSON for work experience parsing.\nRaw response:\n${responseText}`
+      `AI returned invalid JSON for work experience parsing.\nRaw response:\n${responseText}`
     );
   }
 
   // Validate minimal shape
   if (!parsed || !Array.isArray(parsed.entries)) {
     throw new Error(
-      "Gemini response missing required 'entries' array in work experience schema."
+      "AI response missing required 'entries' array in work experience schema."
     );
   }
 

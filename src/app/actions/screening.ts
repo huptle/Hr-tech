@@ -45,7 +45,7 @@ async function simulateVoiceScreeningFallback(
 
   return {
     ok: true,
-    message: `Simulated screening for ${pending.length} candidate(s). Add GEMINI_API_KEY for real AI scores.`,
+    message: `Simulated screening for ${pending.length} candidate(s). Configure AI on the server for real scores.`,
   };
 }
 

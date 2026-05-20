@@ -51,7 +51,7 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   if (!job) notFound();
 
-  const geminiReady = isGeminiConfigured();
+  const aiReady = isGeminiConfigured();
   const pendingScreening = job.candidates.filter((c) => c.rankScore === null);
   const applyBase = process.env.NEXT_PUBLIC_APPLY_URL?.replace(/\/$/, "") ?? "";
   const applyLink = applyBase ? `${applyBase}/?job=${job.id}` : "";
@@ -104,7 +104,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                 <JobSettingsModal
                   job={job}
                   action={updateJob.bind(null, job.id)}
-                  geminiReady={geminiReady}
+                  aiReady={aiReady}
                 />
               }
             />
@@ -165,7 +165,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               jobId={job.id}
               pendingCount={pendingScreening.length}
               totalCandidates={job.candidates.length}
-              geminiReady={geminiReady}
+              aiReady={aiReady}
             />
           </SectionCard>
         </Section>

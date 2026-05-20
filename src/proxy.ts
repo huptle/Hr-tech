@@ -13,6 +13,8 @@ const SESSION_OPTIONAL_PATHS = new Set([
   "/api/webhooks/vapi",
   "/api/auth/google/callback",
   "/api/integrations/candidate-apply",
+  "/api/integrations/public-jobs",
+  "/api/integrations/job-recommendations",
 ]);
 
 function getSecret(): Uint8Array | null {

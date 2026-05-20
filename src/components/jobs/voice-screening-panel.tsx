@@ -12,14 +12,14 @@ type Props = {
   jobId: string;
   pendingCount: number;
   totalCandidates: number;
-  geminiReady: boolean;
+  aiReady: boolean;
 };
 
 export function VoiceScreeningPanel({
   jobId,
   pendingCount,
   totalCandidates,
-  geminiReady,
+  aiReady,
 }: Props) {
   const [state, formAction, isPending] = useActionState<
     ScreeningResult | null,
@@ -31,12 +31,12 @@ export function VoiceScreeningPanel({
 
   const subtitle = noCandidates
     ? "Add candidates first, then run screening."
-    : geminiReady
+    : aiReady
       ? pendingCount > 0
-        ? `${pendingCount} candidate(s) ready for Gemini scoring from resume + JD context.`
-        : "All candidates have scores. Re-run to refresh with Gemini."
+        ? `${pendingCount} candidate(s) ready for AI scoring from resume + JD context.`
+        : "All candidates have scores. Re-run to refresh with AI."
       : pendingCount > 0
-        ? `${pendingCount} candidate(s) need a score (set GEMINI_API_KEY for real AI).`
+        ? `${pendingCount} candidate(s) need a score (configure AI on the server for real scoring).`
         : "All candidates have simulated scores. Re-run to refresh.";
 
   return (
@@ -48,7 +48,7 @@ export function VoiceScreeningPanel({
           </div>
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-text-primary">
-              {geminiReady ? "AI screening (Gemini)" : "AI screening (simulated)"}
+              {aiReady ? "AI screening" : "AI screening (simulated)"}
             </h2>
             <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>
           </div>

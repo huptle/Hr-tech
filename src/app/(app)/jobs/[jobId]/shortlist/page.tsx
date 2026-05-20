@@ -39,7 +39,7 @@ export default async function ShortlistPage({ params }: PageProps) {
 
   if (!job) notFound();
 
-  const geminiReady = isGeminiConfigured();
+  const aiReady = isGeminiConfigured();
   const top = job.candidates.slice(0, 10);
 
   return (
@@ -58,9 +58,9 @@ export default async function ShortlistPage({ params }: PageProps) {
                 Top candidates
               </h1>
               <p className="mt-1.5 text-sm text-text-secondary">
-                {geminiReady
-                  ? "Ranked with Gemini when you run screening; use tools below for panel narratives."
-                  : "Ranked by simulated scores — add GEMINI_API_KEY for AI screening and summaries."}
+                {aiReady
+                  ? "Ranked with AI when you run screening; use tools below for panel narratives."
+                  : "Ranked by simulated scores — configure AI on the server for screening and summaries."}
               </p>
             </div>
             <div className="flex gap-2.5 flex-wrap">
@@ -100,7 +100,7 @@ export default async function ShortlistPage({ params }: PageProps) {
           </FadeUp>
         ) : (
           <Section delay={0.05}>
-            {geminiReady && (
+            {aiReady && (
               <ShortlistAiPanel
                 jobId={job.id}
                 candidates={top.map((c) => ({

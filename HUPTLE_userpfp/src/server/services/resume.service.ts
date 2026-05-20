@@ -46,14 +46,11 @@ export type ProcessedResumeProfile = {
   email?: string;
 };
 
-export const processAndStoreResume = async (
+/** Parse PDF + upload to Supabase; does not sync to HR or require a job id. */
+export async function parseAndUploadResume(
   email: string,
   file: File,
-  jobId: string,
-): Promise<ProcessedResumeProfile> => {
-  if (!jobId?.trim()) {
-    throw new Error("Job id is required. Use the apply link shared by HR.");
-  }
+): Promise<{ parsedData: ResumeData; resumeUrl: string }> {
   const fileExt = file.name.split(".").pop() || "pdf";
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
@@ -69,7 +66,7 @@ export const processAndStoreResume = async (
 
   if (uploadError) {
     throw new Error(
-      `Storage upload failed: ${uploadError.message}. Make sure the 'resumes' bucket exists.`
+      `Storage upload failed: ${uploadError.message}. Make sure the 'resumes' bucket exists.`,
     );
   }
 
@@ -85,14 +82,18 @@ export const processAndStoreResume = async (
 
     const result = await new Promise<{ text: string; pages: number }>((resolve, reject) => {
       pdfParser.on("pdfParser_dataError", (err: Error | { parserError: Error }) => {
-        const msg = err instanceof Error ? err.message : err.parserError?.message || "PDF parse error";
+        const msg =
+          err instanceof Error ? err.message : err.parserError?.message || "PDF parse error";
         reject(new Error(msg));
       });
-      pdfParser.on("pdfParser_dataReady", (pdfData: { Pages: { Width: number; Height: number }[] }) => {
-        const pages = pdfData.Pages.length;
-        const text = pdfParser.getRawTextContent();
-        resolve({ text: safeDecodeText(text), pages });
-      });
+      pdfParser.on(
+        "pdfParser_dataReady",
+        (pdfData: { Pages: { Width: number; Height: number }[] }) => {
+          const pages = pdfData.Pages.length;
+          const text = pdfParser.getRawTextContent();
+          resolve({ text: safeDecodeText(text), pages });
+        },
+      );
       pdfParser.parseBuffer(buffer);
     });
 
@@ -104,7 +105,7 @@ export const processAndStoreResume = async (
 
   if (pageCount > MAX_PAGES) {
     throw new Error(
-      `Resume exceeds ${MAX_PAGES} pages (found ${pageCount} pages). Please upload a shorter resume.`
+      `Resume exceeds ${MAX_PAGES} pages (found ${pageCount} pages). Please upload a shorter resume.`,
     );
   }
 
@@ -115,7 +116,7 @@ export const processAndStoreResume = async (
     }
     const model = new ChatGoogleGenerativeAI({
       apiKey: process.env.GEMINI_API_KEY,
-      model: "gemini-2.5-flash",
+      model: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash",
       temperature: 0,
     });
 
@@ -128,12 +129,27 @@ export const processAndStoreResume = async (
 
   if (!parsedData.userInfo.name) {
     throw new Error(
-      "The uploaded document does not appear to be a resume. Please upload a valid resume/CV."
+      "The uploaded document does not appear to be a resume. Please upload a valid resume/CV.",
     );
   }
 
   const emailMatch = parsedData.userInfo.email || email;
   parsedData.userInfo.email = emailMatch;
+
+  return { parsedData, resumeUrl };
+}
+
+export const processAndStoreResume = async (
+  email: string,
+  file: File,
+  jobId: string,
+): Promise<ProcessedResumeProfile> => {
+  if (!jobId?.trim()) {
+    throw new Error("Job id is required. Use the apply link shared by HR.");
+  }
+
+  const { parsedData, resumeUrl } = await parseAndUploadResume(email, file);
+  const emailMatch = parsedData.userInfo.email;
 
   const profile = await createProfile({
     name: parsedData.userInfo.name,

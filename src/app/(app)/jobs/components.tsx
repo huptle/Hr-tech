@@ -26,10 +26,10 @@ import {
 
 export function CreateJobFormModal({
   action,
-  geminiReady,
+  aiReady,
 }: {
   action: (payload: FormData) => void;
-  geminiReady: boolean;
+  aiReady: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -70,7 +70,7 @@ export function CreateJobFormModal({
 
           <div className="mb-2">
             <p className="text-sm text-text-secondary">
-              Saves the description and screening questions (defaults or Gemini-generated).
+              Saves the description and screening questions (defaults or AI-generated).
             </p>
           </div>
 
@@ -86,10 +86,10 @@ export function CreateJobFormModal({
             />
           </FormField>
 
-          {geminiReady && (
+          {aiReady && (
             <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 space-y-3">
               <p className="text-xs font-medium text-text-secondary">
-                Gemini: rough bullets → polished JD + 10 tailored questions (fills the form below).
+                AI: rough bullets → polished JD + 10 tailored questions (fills the form below).
               </p>
               <FormField label="Rough notes / bullets (optional)" htmlFor="roughNotes">
                 <textarea
@@ -112,7 +112,7 @@ export function CreateJobFormModal({
                 ) : (
                   <Sparkles className="h-3.5 w-3.5" />
                 )}
-                Generate draft with Gemini
+                Generate draft with AI
               </BtnSecondary>
               {aiError && (
                 <p className="text-xs text-red-400 whitespace-pre-wrap">{aiError}</p>
@@ -127,7 +127,7 @@ export function CreateJobFormModal({
               rows={6}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Paste full JD or use Gemini above…"
+              placeholder="Paste full JD or use AI above…"
               className={`resize-y ${fieldInputClass.replace("mt-1 ", "")}`}
             />
           </FormField>
@@ -249,7 +249,7 @@ export function AddCandidateModal({ action }: { action: (payload: FormData) => v
 export function JobSettingsModal({
   job,
   action,
-  geminiReady,
+  aiReady,
 }: {
   job: {
     id: string;
@@ -258,7 +258,7 @@ export function JobSettingsModal({
     screeningDurationMin: number;
   };
   action: (payload: FormData) => void;
-  geminiReady: boolean;
+  aiReady: boolean;
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -308,7 +308,7 @@ export function JobSettingsModal({
             />
           </FormField>
 
-          {geminiReady && (
+          {aiReady && (
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <BtnSecondary
                 type="button"
@@ -332,7 +332,7 @@ export function JobSettingsModal({
                 ) : (
                   <Sparkles className="h-3 w-3" />
                 )}
-                Polish JD with Gemini
+                Polish JD with AI
               </BtnSecondary>
               <BtnSecondary
                 type="button"

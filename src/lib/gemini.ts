@@ -31,7 +31,7 @@ export async function geminiGenerateText(prompt: string): Promise<string> {
   const model = getModel(false);
   const res = await model.generateContent(prompt);
   const text = res.response.text();
-  if (!text?.trim()) throw new Error("Empty response from Gemini");
+  if (!text?.trim()) throw new Error("Empty response from AI");
   return text.trim();
 }
 
@@ -39,7 +39,7 @@ export async function geminiGenerateJson<T>(prompt: string): Promise<T> {
   const model = getModel(true);
   const res = await model.generateContent(prompt);
   const raw = res.response.text();
-  if (!raw?.trim()) throw new Error("Empty JSON from Gemini");
+  if (!raw?.trim()) throw new Error("Empty JSON from AI");
   const parsed = JSON.parse(stripJsonFence(raw)) as T;
   return parsed;
 }
