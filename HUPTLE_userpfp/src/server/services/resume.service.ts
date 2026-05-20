@@ -38,12 +38,19 @@ function safeDecodeText(encoded: string): string {
     .trim();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ProcessedResumeProfile = {
+  resumeUrl: string;
+  parsed_data: ResumeData;
+  id?: string;
+  name?: string;
+  email?: string;
+};
+
 export const processAndStoreResume = async (
   email: string,
   file: File,
   jobId: string,
-): Promise<any> => {
+): Promise<ProcessedResumeProfile> => {
   if (!jobId?.trim()) {
     throw new Error("Job id is required. Use the apply link shared by HR.");
   }
@@ -140,7 +147,9 @@ export const processAndStoreResume = async (
     parsedData,
   });
 
-  const row = profile?.[0];
+  const row = profile?.[0] as
+    | { id?: string; name?: string; email?: string; parsed_data?: ResumeData }
+    | undefined;
   await syncCandidateToHrPortal({
     jobId: jobId.trim(),
     parsed: parsedData,
@@ -148,5 +157,11 @@ export const processAndStoreResume = async (
     externalProfileId: row?.id,
   });
 
-  return { ...row, parsed_data: row?.parsed_data ?? parsedData, resumeUrl };
+  return {
+    id: row?.id,
+    name: row?.name ?? parsedData.userInfo.name,
+    email: row?.email ?? emailMatch,
+    parsed_data: (row?.parsed_data as ResumeData | undefined) ?? parsedData,
+    resumeUrl,
+  };
 };

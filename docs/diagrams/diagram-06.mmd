@@ -1,0 +1,9 @@
+flowchart TD
+  START[Landing /?job=jobId] -->|missing job| ERR[Invalid apply link]
+  START -->|valid| FORM[Apply form: email + PDF]
+  FORM --> API[POST /api/resume]
+  API --> PARSE[Gemini extract structured resume]
+  PARSE --> STORE[Supabase profile + file]
+  STORE --> SYNC[hr-sync to HR internal API]
+  SYNC --> OK[Success optional Profile page]
+  OK --> VIEW[Rich profile UI from parsed JSON]

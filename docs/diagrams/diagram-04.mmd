@@ -1,0 +1,25 @@
+flowchart TD
+  A[HR: Create job] --> B{Share apply link?}
+  B -->|yes| C[Candidate: job id + upload resume]
+  B -->|no| D[HR: Add candidate manually]
+  C --> E[Gemini parse in Apply portal]
+  E --> F[Supabase store PDF + profile]
+  F --> G[Sync to HR Postgres]
+  D --> G
+  G --> H[HR: Job page Candidates list]
+  H --> I[Voice screening Gemini scores rank]
+  H --> J[Async text screening per candidate]
+  I --> K[Shortlist Pipeline views]
+  J --> K
+  K --> L[Schedule: create slots]
+  L --> M{Scheduling path}
+  M -->|Manual| N[Book candidate to slot]
+  M -->|AI calls| O[Vapi calls shortlisted with phone]
+  O --> P[Webhook transcript]
+  P --> Q[Gemini parse availability]
+  Q --> R[Book slot + optional Google Calendar]
+  N --> R
+  R --> S[Journey Round 1 to Offer to Hired]
+  S --> T[Reports + Activity feed]
+  K --> U[AI email drafts invite reject offer]
+  K --> V[Recruiting Copilot Q and A]

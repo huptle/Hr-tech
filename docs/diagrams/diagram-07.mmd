@@ -1,0 +1,16 @@
+sequenceDiagram
+  participant HR as HR UI
+  participant App as HR app
+  participant Vapi as Vapi
+  participant GCal as Google Calendar
+  participant Apply as Apply portal
+
+  HR->>App: Start scheduling call campaign
+  App->>Vapi: Outbound call +91
+  Vapi->>App: POST /api/webhooks/vapi
+  App->>App: Gemini parse transcript
+  App->>GCal: Create event if connected
+  App->>HR: Slot booked + call status
+
+  Apply->>App: POST candidate-apply secret
+  App->>HR: Candidate on job + activity log

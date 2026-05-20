@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { errorMessage } from "@/lib/error-message";
 import { generateAndSendOtp, verifyOtp } from "../services/otp.service";
 import { processAndStoreResume } from "../services/resume.service";
 
@@ -17,11 +18,11 @@ export const handleSendOtp = async (req: Request) => {
     await generateAndSendOtp(email);
     
     return NextResponse.json({ success: true, message: "OTP sent successfully" }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to send OTP" },
-      { status: 500 }
+      { success: false, message: errorMessage(error, "Failed to send OTP") },
+      { status: 500 },
     );
   }
 };
