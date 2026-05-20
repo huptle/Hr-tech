@@ -74,7 +74,7 @@ export async function createVapiSchedulingCall(
       firstMessage: `Hello ${input.candidateName}, this is an automated call from ${input.companyName || "our HR team"} regarding your application for ${input.jobTitle}. Do you have two minutes to schedule a short HR discussion call?`,
       model: {
         provider: "google",
-        model: process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash",
+        model: process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash",
         messages: [
           {
             role: "system",
