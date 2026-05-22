@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Mail, Sparkles } from "lucide-react";
 import { useCandidateStore } from "@/store/useCandidateStore";
+import { setSessionEmail } from "@/lib/candidate-session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,7 @@ export function MatchResumeForm() {
         parsed_data: parsed,
       });
       setRecommendations((data.data.recommendations ?? []) as JobRecommendation[]);
+      if (parsed.userInfo.email) setSessionEmail(parsed.userInfo.email);
       router.push("/match/results");
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");

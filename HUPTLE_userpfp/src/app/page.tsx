@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Zap, ShieldCheck, Sparkles, Briefcase, ArrowRight } from "lucide-react";
 import { ApplyPortalHeader } from "@/components/apply-portal-header";
 import { ApplyForm } from "./apply-form";
+import { JobsLoadError } from "@/components/jobs-load-error";
 import { JobCard } from "@/components/job-card";
 import { fetchPublicJobsFromHr } from "@/server/services/hr-portal.service";
 import { LinkButton } from "@/components/link-button";
@@ -16,11 +17,13 @@ export default async function Home({ searchParams }: PageProps) {
 
   let jobs: Awaited<ReturnType<typeof fetchPublicJobsFromHr>> = [];
   let selectedJob: (typeof jobs)[number] | undefined;
+  let jobsError = "";
   try {
     jobs = await fetchPublicJobsFromHr();
     if (jobId) selectedJob = jobs.find((j) => j.id === jobId);
-  } catch {
+  } catch (e) {
     jobs = [];
+    jobsError = e instanceof Error ? e.message : "Could not load jobs.";
   }
 
   if (jobId) {
@@ -112,7 +115,9 @@ export default async function Home({ searchParams }: PageProps) {
             ) : null}
           </div>
 
-          {preview.length === 0 ? (
+          {jobsError ? (
+            <JobsLoadError message={jobsError} />
+          ) : preview.length === 0 ? (
             <p className="text-muted-foreground text-sm py-8 text-center border border-dashed border-border rounded-2xl">
               No live jobs published yet. HR can set job status to Live in the portal.
             </p>

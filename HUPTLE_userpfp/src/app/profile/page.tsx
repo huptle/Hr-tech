@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCandidateStore } from "@/store/useCandidateStore";
 import {
@@ -14,18 +14,62 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { ResumeData } from "@/server/services/resume.types";
+import { getSessionEmail } from "@/lib/candidate-session";
+import { ApplyPortalHeader } from "@/components/apply-portal-header";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { profile } = useCandidateStore();
+  const { profile, setProfile } = useCandidateStore();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!profile) {
-      router.push("/");
+    if (profile) {
+      setLoading(false);
+      return;
     }
-  }, [profile, router]);
 
-  if (!profile) return null;
+    const email = getSessionEmail();
+    if (!email) {
+      router.replace("/account");
+      return;
+    }
+
+    fetch(`/api/profile?email=${encodeURIComponent(email)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.data) {
+          router.replace("/account");
+          return;
+        }
+        const row = data.data as Record<string, unknown>;
+        const parsed =
+          typeof row.parsed_data === "string"
+            ? (JSON.parse(row.parsed_data) as ResumeData)
+            : (row.parsed_data as ResumeData);
+        setProfile({
+          name: String(row.name ?? ""),
+          email: String(row.email ?? email),
+          phone: String(row.phone ?? ""),
+          skills: Array.isArray(row.skills) ? (row.skills as string[]) : [],
+          experience: String(row.experience ?? ""),
+          education: String(row.education ?? ""),
+          summary: row.summary ? String(row.summary) : undefined,
+          resumeUrl: row.resume_url ? String(row.resume_url) : undefined,
+          parsed_data: parsed,
+        });
+      })
+      .catch(() => router.replace("/account"))
+      .finally(() => setLoading(false));
+  }, [profile, router, setProfile]);
+
+  if (loading || !profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <ApplyPortalHeader />
+        <p className="text-center text-muted-foreground py-20">Loading profile…</p>
+      </div>
+    );
+  }
 
   const raw = profile.parsed_data;
   const data = (typeof raw === "string" ? JSON.parse(raw) : raw) as ResumeData;
@@ -42,8 +86,9 @@ export default function ProfilePage() {
   const formatDate = (d: string) => d;
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans p-6 md:p-12">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background text-foreground font-sans">
+      <ApplyPortalHeader />
+      <div className="max-w-6xl mx-auto space-y-8 p-6 md:p-12">
 
         <Button
           variant="ghost"
@@ -51,7 +96,7 @@ export default function ProfilePage() {
           className="mb-4 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Upload
+          Back to home
         </Button>
 
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-border">

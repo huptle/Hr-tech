@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Upload, Mail, CheckCircle2, SendHorizontal } from "lucide-react";
 import { useCandidateStore } from "@/store/useCandidateStore";
+import { setSessionEmail } from "@/lib/candidate-session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,7 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle?: strin
       }
 
       setProfile(data.data);
+      if (data.data?.email) setSessionEmail(data.data.email);
       router.push("/profile");
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Error processing application.");

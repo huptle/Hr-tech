@@ -1,4 +1,5 @@
 import { ApplyPortalHeader } from "@/components/apply-portal-header";
+import { JobsLoadError } from "@/components/jobs-load-error";
 import { JobCard } from "@/components/job-card";
 import { fetchPublicJobsFromHr } from "@/server/services/hr-portal.service";
 import { LinkButton } from "@/components/link-button";
@@ -39,11 +40,7 @@ export default async function JobsPage() {
           </LinkButton>
         </div>
 
-        {loadError ? (
-          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-4">
-            {loadError}
-          </p>
-        ) : null}
+        {loadError ? <JobsLoadError message={loadError} /> : null}
 
         {jobs.length === 0 && !loadError ? (
           <p className="text-muted-foreground text-center py-16">No open jobs right now. Check back soon.</p>

@@ -30,9 +30,21 @@ function hrBaseAndSecret(): { base: string; secret: string } | null {
 async function hrFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const cfg = hrBaseAndSecret();
   if (!cfg) {
-    throw new Error(
-      "HR portal is not configured (HR_PORTAL_INTERNAL_URL + CANDIDATE_SYNC_SECRET).",
-    );
+    const base =
+      process.env.HR_PORTAL_INTERNAL_URL?.trim() ||
+      process.env.HR_PORTAL_URL?.trim();
+    const secret = process.env.CANDIDATE_SYNC_SECRET?.trim();
+    if (!secret) {
+      throw new Error(
+        "CANDIDATE_SYNC_SECRET is missing in the apply portal .env (must match the HR app).",
+      );
+    }
+    if (!base) {
+      throw new Error(
+        "HR_PORTAL_INTERNAL_URL is missing (use http://app:3000 inside Docker).",
+      );
+    }
+    throw new Error("HR portal connection is not configured.");
   }
 
   const res = await fetch(`${cfg.base}${path}`, {
