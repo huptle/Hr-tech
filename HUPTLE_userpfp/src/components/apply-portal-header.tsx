@@ -1,25 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Briefcase, Sparkles, UserCircle, LogIn, LogOut } from "lucide-react";
 import { getSessionEmail, clearSessionEmail } from "@/lib/candidate-session";
 import { useCandidateStore } from "@/store/useCandidateStore";
 
 export function ApplyPortalHeader() {
   const { profile, reset } = useCandidateStore();
-  const [sessionEmail, setSessionEmailState] = useState<string | null>(null);
-
-  useEffect(() => {
-    setSessionEmailState(getSessionEmail());
-  }, [profile]);
-
+  const sessionEmail = getSessionEmail();
   const signedIn = Boolean(sessionEmail || profile?.email);
 
   function signOut() {
     clearSessionEmail();
     reset();
-    setSessionEmailState(null);
     window.location.href = "/";
   }
 

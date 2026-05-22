@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Mail, Sparkles } from "lucide-react";
+import { Mail, Sparkles } from "lucide-react";
 import { useCandidateStore } from "@/store/useCandidateStore";
 import { setSessionEmail } from "@/lib/candidate-session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

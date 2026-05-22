@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplyPortalHeader } from "@/components/apply-portal-header";
 import { ApplyForm } from "@/app/apply-form";

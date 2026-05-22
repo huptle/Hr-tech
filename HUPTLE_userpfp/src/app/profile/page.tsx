@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCandidateStore } from "@/store/useCandidateStore";
 import {
@@ -20,13 +20,9 @@ import { ApplyPortalHeader } from "@/components/apply-portal-header";
 export default function ProfilePage() {
   const router = useRouter();
   const { profile, setProfile } = useCandidateStore();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile) {
-      setLoading(false);
-      return;
-    }
+    if (profile) return;
 
     const email = getSessionEmail();
     if (!email) {
@@ -58,11 +54,10 @@ export default function ProfilePage() {
           parsed_data: parsed,
         });
       })
-      .catch(() => router.replace("/account"))
-      .finally(() => setLoading(false));
+      .catch(() => router.replace("/account"));
   }, [profile, router, setProfile]);
 
-  if (loading || !profile) {
+  if (!profile) {
     return (
       <div className="min-h-screen bg-background">
         <ApplyPortalHeader />
