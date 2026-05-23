@@ -30,12 +30,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
+    # With Caddy on the host, set APP_BIND=127.0.0.1 in .env so ports are not public.
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${APP_BIND:-0.0.0.0}:${APP_PORT:-3000}:3000"
     networks:
       - hrnet
 
-  # Candidate apply portal (HUPTLE_userpfp) — port 3002 by default
+  # Candidate apply portal (HUPTLE_userpfp) — host port 3002 by default
   apply:
     image: ${APPLY_DOCKER_IMAGE:-huptle-apply:local}
     restart: unless-stopped
@@ -48,7 +49,7 @@ services:
       PORT: "3000"
       HR_PORTAL_INTERNAL_URL: http://app:3000
     ports:
-      - "${APPLY_PORT:-3002}:3000"
+      - "${APP_BIND:-0.0.0.0}:${APPLY_PORT:-3002}:3000"
     networks:
       - hrnet
 
