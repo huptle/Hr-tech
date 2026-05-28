@@ -17,10 +17,6 @@ interface CandidateProfile {
 interface CandidateStore {
   email: string;
   setEmail: (email: string) => void;
-  otp: string;
-  setOtp: (otp: string) => void;
-  isOtpSent: boolean;
-  setIsOtpSent: (val: boolean) => void;
   isVerified: boolean;
   setIsVerified: (val: boolean) => void;
   file: File | null;
@@ -35,10 +31,6 @@ interface CandidateStore {
 export const useCandidateStore = create<CandidateStore>((set) => ({
   email: '',
   setEmail: (email) => set({ email }),
-  otp: '',
-  setOtp: (otp) => set({ otp }),
-  isOtpSent: false,
-  setIsOtpSent: (isOtpSent) => set({ isOtpSent }),
   isVerified: false,
   setIsVerified: (isVerified) => set({ isVerified }),
   file: null,
@@ -49,8 +41,6 @@ export const useCandidateStore = create<CandidateStore>((set) => ({
   setRecommendations: (recommendations) => set({ recommendations }),
   reset: () => set({
     email: '',
-    otp: '',
-    isOtpSent: false,
     isVerified: false,
     file: null,
     profile: null,
