@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 const ModernLoader = () => (
-  <svg className="animate-spin mr-3 h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+  <svg className="animate-spin mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
   </svg>
@@ -62,34 +62,39 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle?: strin
   };
 
   return (
-    <Card className="shadow-2xl border-border/50 bg-card/95 backdrop-blur-sm overflow-hidden rounded-[1.5rem] flex flex-col">
+    <Card className="shadow-lg border-border bg-card overflow-hidden rounded-2xl flex flex-col">
       <AnimatePresence mode="wait">
         <motion.div
           key="process-form"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
         >
           <form onSubmit={handleSubmitProcess}>
-            <CardHeader className="pb-6 pt-8 px-8 border-b border-border/40 bg-muted/20">
-              <CardTitle className="text-2xl">
+            <CardHeader className="pb-6 pt-6 px-6 border-b border-border/60 bg-accent/25">
+              <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold uppercase tracking-wider w-fit">
+                Application Form
+              </span>
+              <CardTitle className="text-xl font-extrabold text-foreground mt-2">
                 {jobTitle ? `Apply: ${jobTitle}` : "Apply for this role"}
               </CardTitle>
-              <CardDescription className="text-base text-muted-foreground">
+              <CardDescription className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                 {jobTitle ? (
-                  <>Submit your resume for this opening.</>
+                  <>Submit your resume to auto-fill details and open your candidate channel.</>
                 ) : (
                   <>
-                    Job reference: <span className="font-mono text-xs">{jobId}</span>
+                    Job reference key: <span className="font-mono text-xs font-bold text-primary bg-primary/10 px-1 rounded">{jobId}</span>
                   </>
                 )}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-8 pt-8 px-8">
-              <div className="space-y-3">
-                <Label htmlFor="resume" className="text-sm font-semibold">
-                  Resume (PDF, max 2 pages)
+            
+            <CardContent className="space-y-5 pt-6 px-6 pb-6">
+              {/* File Dropzone */}
+              <div className="space-y-2">
+                <Label htmlFor="resume" className="text-xs font-bold text-muted-foreground uppercase">
+                  Resume (PDF, max 2MB)
                 </Label>
                 <div className="relative group">
                   <Input
@@ -103,26 +108,29 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle?: strin
                     htmlFor="resume"
                     onDrop={handleDrop}
                     onDragOver={(e) => e.preventDefault()}
-                    className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-border rounded-xl cursor-pointer bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-all"
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer bg-accent/10 hover:bg-accent/35 hover:border-primary/50 transition-all select-none"
                   >
                     {file ? (
-                      <div className="flex items-center gap-2 text-primary font-medium">
-                        <CheckCircle2 className="w-5 h-5" />
-                        {file.name}
+                      <div className="flex flex-col items-center gap-1.5 p-3 text-center">
+                        <CheckCircle2 className="w-8 h-8 text-emerald-500 animate-bounce" />
+                        <span className="text-xs font-bold text-foreground max-w-[240px] truncate">{file.name}</span>
+                        <span className="text-[10px] text-muted-foreground">Click or drop to replace</span>
                       </div>
                     ) : (
-                      <>
-                        <Upload className="w-8 h-8 text-muted-foreground mb-2 group-hover:text-primary transition-colors" />
-                        <span className="text-sm text-muted-foreground">Drop PDF or click to browse</span>
-                      </>
+                      <div className="flex flex-col items-center p-3 text-center">
+                        <Upload className="w-7 h-7 text-muted-foreground mb-1 group-hover:text-primary transition-colors duration-200" />
+                        <span className="text-xs font-bold text-foreground">Click to browse files</span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5">or drag and drop PDF resume</span>
+                      </div>
                     )}
                   </Label>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email address
+              {/* Email Address */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-primary" /> Email Address
                 </Label>
                 <Input
                   id="email"
@@ -131,12 +139,12 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle?: strin
                   placeholder="you@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12"
+                  className="h-11 border-border focus-visible:ring-primary/20"
                 />
               </div>
 
               {errorMsg && (
-                <p className="text-sm text-destructive font-medium bg-destructive/10 p-3 rounded-lg">
+                <p className="text-xs text-destructive font-semibold bg-destructive/10 p-3 rounded-lg border border-destructive/20">
                   {errorMsg}
                 </p>
               )}
@@ -144,15 +152,15 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle?: strin
               <Button
                 type="submit"
                 disabled={isLoading || !email || !file}
-                className="w-full h-12 text-base font-semibold"
+                className="w-full h-11 text-sm font-bold shadow-md shadow-primary/10 active:scale-98"
               >
                 {isLoading ? (
                   <>
-                    <ModernLoader /> Processing…
+                    <ModernLoader /> Uploading & Parsing…
                   </>
                 ) : (
                   <>
-                    <SendHorizontal className="w-5 h-5 mr-2" /> Submit application
+                    <SendHorizontal className="w-4 h-4 mr-2" /> Submit Application
                   </>
                 )}
               </Button>

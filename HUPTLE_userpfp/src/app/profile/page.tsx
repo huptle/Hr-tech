@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { ResumeData } from "@/server/services/resume.types";
 import { getSessionEmail } from "@/lib/candidate-session";
-import { ApplyPortalHeader } from "@/components/apply-portal-header";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -59,50 +59,60 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-background">
-        <ApplyPortalHeader />
+      <DashboardLayout>
         <p className="text-center text-muted-foreground py-20">Loading profile…</p>
-      </div>
+      </DashboardLayout>
     );
   }
 
   const raw = profile.parsed_data;
   const data = (typeof raw === "string" ? JSON.parse(raw) : raw) as ResumeData;
   if (!data?.userInfo?.name) {
-    return <div className="min-h-screen bg-background text-foreground font-sans p-6 md:p-12">
-      <div className="max-w-5xl mx-auto text-center text-muted-foreground">
-        No structured data available for this profile.
-      </div>
-    </div>;
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-6 py-12 text-center text-muted-foreground">
+          No structured data available for this profile.
+        </div>
+      </DashboardLayout>
+    );
   }
 
   const { userInfo, workExperience, education, projects, certifications, miscellaneous } = data;
 
   const formatDate = (d: string) => d;
 
-  return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
-      <ApplyPortalHeader />
-      <div className="max-w-6xl mx-auto space-y-8 p-6 md:p-12">
+  // Get initials for profile badge
+  const getInitials = () => {
+    return userInfo.name
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  };
 
+  return (
+    <DashboardLayout>
+      <div className="container mx-auto px-6 md:px-8 py-10 space-y-8">
         <Button
           variant="ghost"
           onClick={() => router.push("/")}
-          className="mb-4 text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground hover:bg-accent -ml-2"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to home
+          Back to dashboard
         </Button>
 
+        {/* Profile Header */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-border">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-muted border border-border flex items-center justify-center text-3xl font-semibold text-foreground">
-              {userInfo.name.charAt(0)}
+            <div className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-3xl font-extrabold shadow-lg shadow-primary/20 border border-primary/20 shrink-0 select-none">
+              {getInitials()}
             </div>
             <div className="space-y-1">
               <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{userInfo.name}</h1>
-              <div className="flex items-center gap-2 text-primary text-sm bg-primary/10 px-3 py-1 rounded-full w-fit border border-primary/20 font-medium tracking-wide">
-                <CheckCircle2 className="w-4 h-4" />
+              <div className="flex items-center gap-1.5 text-emerald-500 text-xs bg-emerald-500/10 px-3 py-1 rounded-full w-fit border border-emerald-500/20 font-bold tracking-wide">
+                <CheckCircle2 className="w-3.5 h-3.5" />
                 Verified Candidate Profile
               </div>
               {userInfo.summary && (
@@ -118,62 +128,69 @@ export default function ProfilePage() {
               href={profile.resumeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-9 gap-1.5 px-2.5 text-sm font-medium whitespace-nowrap transition-all"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-card hover:bg-accent hover:text-foreground h-10 gap-1.5 px-4 text-sm font-bold shadow-sm transition-all"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 text-primary" />
               Download Resume
             </a>
           )}
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-          <div className="md:col-span-2 space-y-8">
-
-            {workExperience.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <Briefcase className="w-5 h-5 text-muted-foreground" /> Work Experience
+        {/* Main Grid content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column (Main timeline sections) */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Work Experience */}
+            {workExperience && workExperience.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-primary" /> Work Experience
                 </h2>
                 <div className="space-y-4">
                   {workExperience.map((exp, i) => (
-                    <Card key={i} className="shadow-2xl border-border bg-card">
-                      <CardContent className="p-6">
+                    <Card key={i} className="border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-6 space-y-3">
                         <div className="flex items-start justify-between gap-4 flex-wrap">
                           <div>
-                            <h3 className="text-lg font-bold text-foreground">{exp.role}</h3>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                              <Building2 className="w-3.5 h-3.5" />
-                              <span>{exp.company}</span>
+                            <h3 className="text-lg font-bold text-foreground leading-snug">{exp.role}</h3>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-muted-foreground mt-1">
+                              <span className="inline-flex items-center gap-1">
+                                <Building2 className="w-3.5 h-3.5 text-primary/70" />
+                                {exp.company}
+                              </span>
                               {exp.location && (
                                 <>
                                   <span className="text-border">|</span>
-                                  <MapPin className="w-3.5 h-3.5" />
-                                  <span>{exp.location}</span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <MapPin className="w-3.5 h-3.5 text-primary/70" />
+                                    {exp.location}
+                                  </span>
                                 </>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-md whitespace-nowrap">
-                            <Calendar className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-accent/40 px-3 py-1.5 rounded-lg whitespace-nowrap">
+                            <Calendar className="w-3.5 h-3.5 text-primary/70" />
                             {formatDate(exp.startDate)} – {formatDate(exp.endDate)}
-                            {exp.duration && <span className="text-border ml-1">({exp.duration})</span>}
+                            {exp.duration && <span className="text-primary/70 ml-1">({exp.duration})</span>}
                           </div>
                         </div>
-                        {exp.responsibilities.length > 0 && (
-                          <ul className="mt-4 space-y-1.5">
+
+                        {exp.responsibilities && exp.responsibilities.length > 0 && (
+                          <ul className="space-y-1.5">
                             {exp.responsibilities.map((r, j) => (
                               <li key={j} className="text-sm text-muted-foreground leading-relaxed flex items-start gap-2">
-                                <span className="text-primary mt-1.5 flex-shrink-0 w-1 h-1 rounded-full bg-primary" />
-                                {r}
+                                <span className="text-primary mt-2 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                                <span>{r}</span>
                               </li>
                             ))}
                           </ul>
                         )}
-                        {exp.technologies.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-4">
+
+                        {exp.technologies && exp.technologies.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-2">
                             {exp.technologies.map((tech, j) => (
-                              <span key={j} className="px-2 py-0.5 bg-primary/5 border border-primary/10 rounded text-xs font-medium text-primary">
+                              <span key={j} className="px-2.5 py-0.5 bg-primary/5 border border-primary/10 rounded-md text-xs font-bold text-primary">
                                 {tech}
                               </span>
                             ))}
@@ -186,25 +203,26 @@ export default function ProfilePage() {
               </section>
             )}
 
-            {education.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <GraduationCap className="w-5 h-5 text-muted-foreground" /> Education
+            {/* Education */}
+            {education && education.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-primary" /> Education
                 </h2>
                 <div className="space-y-3">
                   {education.map((edu, i) => (
-                    <Card key={i} className="shadow-2xl border-border bg-card">
-                      <CardContent className="p-5">
+                    <Card key={i} className="border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-5 space-y-2">
                         <div className="flex items-start justify-between gap-4 flex-wrap">
                           <div>
-                            <h3 className="font-bold text-foreground">{edu.institution}</h3>
-                            <p className="text-sm text-muted-foreground mt-0.5">
+                            <h3 className="font-bold text-foreground leading-snug">{edu.institution}</h3>
+                            <p className="text-sm font-semibold text-muted-foreground mt-1">
                               {edu.degree}{edu.field ? ` in ${edu.field}` : ""}
                               {edu.gpa ? ` – GPA: ${edu.gpa}` : ""}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-md whitespace-nowrap">
-                            <Calendar className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-accent/40 px-3 py-1.5 rounded-lg whitespace-nowrap">
+                            <Calendar className="w-3.5 h-3.5 text-primary/70" />
                             {edu.startDate ? `${formatDate(edu.startDate)} – ` : ""}{formatDate(edu.endDate)}
                           </div>
                         </div>
@@ -215,32 +233,33 @@ export default function ProfilePage() {
               </section>
             )}
 
-            {projects.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <Code className="w-5 h-5 text-muted-foreground" /> Projects
+            {/* Projects */}
+            {projects && projects.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Code className="w-5 h-5 text-primary" /> Projects
                 </h2>
                 <div className="space-y-3">
                   {projects.map((proj, i) => (
-                    <Card key={i} className="shadow-2xl border-border bg-card">
-                      <CardContent className="p-5">
+                    <Card key={i} className="border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-5 space-y-3">
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-foreground">{proj.name}</h3>
+                              <h3 className="font-bold text-foreground leading-snug">{proj.name}</h3>
                               {proj.url && (
-                                <a href={proj.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                                  <ExternalLink className="w-3.5 h-3.5" />
+                                <a href={proj.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                                  <ExternalLink className="w-4 h-4" />
                                 </a>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{proj.description}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed mt-1">{proj.description}</p>
                           </div>
                         </div>
-                        {proj.technologies.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-3">
+                        {proj.technologies && proj.technologies.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
                             {proj.technologies.map((tech, j) => (
-                              <span key={j} className="px-2 py-0.5 bg-secondary/20 border border-secondary/20 rounded text-xs font-medium text-secondary-foreground">
+                              <span key={j} className="px-2.5 py-0.5 bg-accent text-accent-foreground border border-border rounded-md text-xs font-bold">
                                 {tech}
                               </span>
                             ))}
@@ -253,43 +272,46 @@ export default function ProfilePage() {
               </section>
             )}
 
-            {certifications.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <Award className="w-5 h-5 text-muted-foreground" /> Certifications
+            {/* Certifications */}
+            {certifications && certifications.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Award className="w-5 h-5 text-primary" /> Certifications
                 </h2>
-                <Card className="shadow-2xl border-border bg-card">
-                  <CardContent className="p-5">
-                    <div className="space-y-3">
-                      {certifications.map((cert, i) => (
-                        <div key={i} className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="font-semibold text-foreground text-sm">{cert.name}</p>
-                            {cert.issuer && (
-                              <p className="text-xs text-muted-foreground">{cert.issuer}</p>
-                            )}
-                          </div>
-                          {cert.year && (
-                            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded whitespace-nowrap">{cert.year}</span>
+                <Card className="border-border bg-card shadow-sm">
+                  <CardContent className="p-5 divide-y divide-border/60 space-y-3">
+                    {certifications.map((cert, i) => (
+                      <div key={i} className={`flex items-start justify-between gap-4 ${i > 0 ? "pt-3" : ""}`}>
+                        <div>
+                          <p className="font-bold text-foreground text-sm">{cert.name}</p>
+                          {cert.issuer && (
+                            <p className="text-xs text-muted-foreground font-semibold mt-0.5">{cert.issuer}</p>
                           )}
                         </div>
-                      ))}
-                    </div>
+                        {cert.year && (
+                          <span className="text-xs font-bold text-muted-foreground bg-accent/40 px-2 py-1 rounded-md whitespace-nowrap">{cert.year}</span>
+                        )}
+                      </div>
+                    ))}
                   </CardContent>
                 </Card>
               </section>
             )}
 
-            {miscellaneous.publications.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <BookOpen className="w-5 h-5 text-muted-foreground" /> Publications
+            {/* Publications */}
+            {miscellaneous?.publications && miscellaneous.publications.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" /> Publications
                 </h2>
-                <Card className="shadow-2xl border-border bg-card">
+                <Card className="border-border bg-card shadow-sm">
                   <CardContent className="p-5">
-                    <ul className="list-disc list-inside space-y-1">
+                    <ul className="space-y-2 list-none">
                       {miscellaneous.publications.map((pub, i) => (
-                        <li key={i} className="text-sm text-muted-foreground">{pub}</li>
+                        <li key={i} className="text-sm text-muted-foreground leading-relaxed flex items-start gap-2">
+                          <span className="text-primary mt-2 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                          <span>{pub}</span>
+                        </li>
                       ))}
                     </ul>
                   </CardContent>
@@ -297,16 +319,20 @@ export default function ProfilePage() {
               </section>
             )}
 
-            {miscellaneous.volunteerWork.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <Heart className="w-5 h-5 text-muted-foreground" /> Volunteer Work
+            {/* Volunteer Work */}
+            {miscellaneous?.volunteerWork && miscellaneous.volunteerWork.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-primary" /> Volunteer Work
                 </h2>
-                <Card className="shadow-2xl border-border bg-card">
+                <Card className="border-border bg-card shadow-sm">
                   <CardContent className="p-5">
-                    <ul className="list-disc list-inside space-y-1">
+                    <ul className="space-y-2 list-none">
                       {miscellaneous.volunteerWork.map((v, i) => (
-                        <li key={i} className="text-sm text-muted-foreground">{v}</li>
+                        <li key={i} className="text-sm text-muted-foreground leading-relaxed flex items-start gap-2">
+                          <span className="text-primary mt-2 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                          <span>{v}</span>
+                        </li>
                       ))}
                     </ul>
                   </CardContent>
@@ -314,16 +340,20 @@ export default function ProfilePage() {
               </section>
             )}
 
-            {miscellaneous.patents.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <Lightbulb className="w-5 h-5 text-muted-foreground" /> Patents
+            {/* Patents */}
+            {miscellaneous?.patents && miscellaneous.patents.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-primary" /> Patents
                 </h2>
-                <Card className="shadow-2xl border-border bg-card">
+                <Card className="border-border bg-card shadow-sm">
                   <CardContent className="p-5">
-                    <ul className="list-disc list-inside space-y-1">
+                    <ul className="space-y-2 list-none">
                       {miscellaneous.patents.map((p, i) => (
-                        <li key={i} className="text-sm text-muted-foreground">{p}</li>
+                        <li key={i} className="text-sm text-muted-foreground leading-relaxed flex items-start gap-2">
+                          <span className="text-primary mt-2 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                          <span>{p}</span>
+                        </li>
                       ))}
                     </ul>
                   </CardContent>
@@ -331,82 +361,84 @@ export default function ProfilePage() {
               </section>
             )}
 
-            {miscellaneous.other && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-4">
-                  <FlaskConical className="w-5 h-5 text-muted-foreground" /> Additional Information
+            {/* Other Info */}
+            {miscellaneous?.other && (
+              <section className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <FlaskConical className="w-5 h-5 text-primary" /> Additional Information
                 </h2>
-                <Card className="shadow-2xl border-border bg-card">
+                <Card className="border-border bg-card shadow-sm">
                   <CardContent className="p-5">
                     <p className="text-sm text-muted-foreground leading-relaxed">{miscellaneous.other}</p>
                   </CardContent>
                 </Card>
               </section>
             )}
-
           </div>
 
+          {/* Right Column (Contact card, skills, languages) */}
           <div className="space-y-6">
-
-            <Card className="shadow-2xl border-border bg-card">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <UserCircle className="w-4 h-4" /> Contact
+            {/* Contact Card */}
+            <Card className="border-border bg-card shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <UserCircle className="w-4 h-4 text-primary" /> Contact Details
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 pt-2">
                 {userInfo.email && (
-                  <div className="flex items-center gap-3 text-sm text-foreground font-medium">
+                  <div className="flex items-center gap-3 text-sm text-foreground font-semibold">
                     <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <span className="truncate">{userInfo.email}</span>
                   </div>
                 )}
                 {userInfo.phone && (
-                  <div className="flex items-center gap-3 text-sm text-foreground font-medium">
+                  <div className="flex items-center gap-3 text-sm text-foreground font-semibold">
                     <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <span>{userInfo.phone}</span>
                   </div>
                 )}
                 {userInfo.location && (
-                  <div className="flex items-center gap-3 text-sm text-foreground font-medium">
+                  <div className="flex items-center gap-3 text-sm text-foreground font-semibold">
                     <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <span>{userInfo.location}</span>
                   </div>
                 )}
                 <Separator className="my-2" />
                 {userInfo.linkedin && (
-                  <a href={userInfo.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
-                    <Link className="w-4 h-4 flex-shrink-0" />
+                  <a href={userInfo.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors font-semibold group">
+                    <Link className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
                     <span className="truncate">LinkedIn</span>
                   </a>
                 )}
                 {userInfo.github && (
-                  <a href={userInfo.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
-                    <Code className="w-4 h-4 flex-shrink-0" />
+                  <a href={userInfo.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors font-semibold group">
+                    <Code className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
                     <span className="truncate">GitHub</span>
                   </a>
                 )}
                 {userInfo.portfolio && (
-                  <a href={userInfo.portfolio} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
-                    <Globe className="w-4 h-4 flex-shrink-0" />
+                  <a href={userInfo.portfolio} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors font-semibold group">
+                    <Globe className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
                     <span className="truncate">Portfolio</span>
                   </a>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="shadow-2xl border-border bg-card">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Code className="w-4 h-4" /> Skills
+            {/* Skills Card */}
+            <Card className="border-border bg-card shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Code className="w-4 h-4 text-primary" /> Key Skills
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-2">
                 <div className="flex flex-wrap gap-2">
                   {userInfo.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="px-3 py-1 bg-muted border border-border rounded-md text-xs font-semibold text-foreground tracking-wide"
+                      className="px-2.5 py-1 bg-accent border border-border rounded-lg text-xs font-bold text-foreground tracking-wide hover:border-primary/30 transition-colors"
                     >
                       {skill}
                     </span>
@@ -415,49 +447,45 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
-            {miscellaneous.languages.length > 0 && (
-              <Card className="shadow-2xl border-border bg-card">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Languages className="w-4 h-4" /> Languages
+            {/* Languages Card */}
+            {miscellaneous?.languages && miscellaneous.languages.length > 0 && (
+              <Card className="border-border bg-card shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Languages className="w-4 h-4 text-primary" /> Languages
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {miscellaneous.languages.map((lang, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-foreground">{lang.language}</span>
-                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{lang.proficiency}</span>
-                      </div>
-                    ))}
-                  </div>
+                <CardContent className="pt-2 space-y-2">
+                  {miscellaneous.languages.map((lang, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm">
+                      <span className="font-semibold text-foreground">{lang.language}</span>
+                      <span className="text-xs font-bold text-muted-foreground bg-accent/40 px-2 py-0.5 rounded-md">{lang.proficiency}</span>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             )}
 
-            {miscellaneous.interests.length > 0 && (
-              <Card className="shadow-2xl border-border bg-card">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Heart className="w-4 h-4" /> Interests
+            {/* Interests Card */}
+            {miscellaneous?.interests && miscellaneous.interests.length > 0 && (
+              <Card className="border-border bg-card shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-primary" /> Interests
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {miscellaneous.interests.map((interest, i) => (
-                      <span key={i} className="px-2.5 py-1 bg-muted/50 border border-border rounded-md text-xs font-medium text-muted-foreground">
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
+                <CardContent className="pt-2 flex flex-wrap gap-2">
+                  {miscellaneous.interests.map((interest, i) => (
+                    <span key={i} className="px-2.5 py-1 bg-accent/30 border border-border rounded-lg text-xs font-semibold text-muted-foreground">
+                      {interest}
+                    </span>
+                  ))}
                 </CardContent>
               </Card>
             )}
-
           </div>
         </div>
-
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

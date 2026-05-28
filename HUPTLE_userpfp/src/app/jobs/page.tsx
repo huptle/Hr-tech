@@ -1,4 +1,4 @@
-import { ApplyPortalHeader } from "@/components/apply-portal-header";
+import { DashboardLayout } from "@/components/dashboard-layout";
 import { JobsLoadError } from "@/components/jobs-load-error";
 import { JobCard } from "@/components/job-card";
 import { fetchPublicJobsFromHr } from "@/server/services/hr-portal.service";
@@ -18,32 +18,37 @@ export default async function JobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <ApplyPortalHeader />
-      <main className="container mx-auto px-6 md:px-12 lg:px-20 py-12 flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+    <DashboardLayout>
+      <div className="container mx-auto px-6 md:px-8 py-10 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Open positions</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+              Open Positions
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1">
               {jobs.length > 0
-                ? `${jobs.length} live role${jobs.length === 1 ? "" : "s"} — apply directly or get AI recommendations.`
-                : "Browse roles published by our HR team."}
+                ? `${jobs.length} live role${jobs.length === 1 ? "" : "s"} currently accepting applications.`
+                : "Browse active positions in our hiring pipeline."}
             </p>
           </div>
           <LinkButton
             href="/match"
             variant="outline"
-            className="inline-flex items-center gap-2"
+            className="inline-flex items-center gap-2 h-10 hover:bg-accent border-border"
           >
-            <Sparkles className="w-4 h-4" />
-            Match my resume
+            <Sparkles className="w-4 h-4 text-primary" />
+            Match My Resume
           </LinkButton>
         </div>
 
         {loadError ? <JobsLoadError message={loadError} /> : null}
 
         {jobs.length === 0 && !loadError ? (
-          <p className="text-muted-foreground text-center py-16">No open jobs right now. Check back soon.</p>
+          <div className="text-center py-16 bg-card border border-dashed border-border rounded-2xl">
+            <p className="text-sm text-muted-foreground">
+              No open roles right now. Please check back soon!
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {jobs.map((job) => (
@@ -51,7 +56,7 @@ export default async function JobsPage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

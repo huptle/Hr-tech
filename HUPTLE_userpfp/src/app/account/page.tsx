@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApplyPortalHeader } from "@/components/apply-portal-header";
+import { DashboardLayout } from "@/components/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Mail, KeyRound } from "lucide-react";
+import { Mail, KeyRound, Sparkles } from "lucide-react";
 import { useCandidateStore } from "@/store/useCandidateStore";
 import { setSessionEmail } from "@/lib/candidate-session";
 import type { ResumeData } from "@/server/services/resume.types";
@@ -94,23 +94,24 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <ApplyPortalHeader />
-      <main className="container mx-auto px-6 md:px-12 lg:px-20 py-16 max-w-md">
-        <Card className="rounded-2xl">
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>
-              We email you a one-time code (Supabase). Use the same email as when you applied or
-              uploaded a resume.
+    <DashboardLayout>
+      <div className="container mx-auto px-6 md:px-8 py-16 max-w-md">
+        <Card className="rounded-2xl border-border bg-card shadow-lg">
+          <CardHeader className="space-y-2">
+            <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold uppercase tracking-wider w-fit">
+              Secure Access
+            </span>
+            <CardTitle className="text-xl font-extrabold text-foreground">Sign In to Profile</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
+              We will send you a one-time verification code via email. Please use the same email you entered when applying.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 pt-2">
             {!otpSent ? (
               <form onSubmit={sendOtp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" /> Email
+                  <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-primary" /> Email Address
                   </Label>
                   <Input
                     id="email"
@@ -119,20 +120,21 @@ export default function AccountPage() {
                     value={email}
                     onChange={(e) => setEmailLocal(e.target.value)}
                     placeholder="you@email.com"
+                    className="h-11 border-border focus-visible:ring-primary/20"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading || !email}>
-                  {loading ? "Sending…" : "Send verification code"}
+                <Button type="submit" className="w-full h-11 text-sm font-bold shadow-md shadow-primary/10" disabled={loading || !email}>
+                  {loading ? "Sending…" : "Send Verification Code"}
                 </Button>
               </form>
             ) : (
               <form onSubmit={verifyOtp} className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Code sent to <strong>{email}</strong>
+                <p className="text-xs text-muted-foreground">
+                  Verification code has been sent to <strong>{email}</strong>
                 </p>
                 <div className="space-y-2">
-                  <Label htmlFor="otp" className="flex items-center gap-2">
-                    <KeyRound className="w-4 h-4" /> Verification code
+                  <Label htmlFor="otp" className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-primary" /> Verification Code
                   </Label>
                   <Input
                     id="otp"
@@ -140,15 +142,16 @@ export default function AccountPage() {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     placeholder="123456"
+                    className="h-11 border-border focus-visible:ring-primary/20 text-center tracking-widest font-mono text-lg"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading || !otp}>
-                  {loading ? "Verifying…" : "Verify and open profile"}
+                <Button type="submit" className="w-full h-11 text-sm font-bold shadow-md shadow-primary/10" disabled={loading || !otp}>
+                  {loading ? "Verifying…" : "Verify and Open Profile"}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-10 border-border hover:bg-accent text-xs font-bold"
                   onClick={() => setOtpSent(false)}
                 >
                   Use a different email
@@ -156,11 +159,11 @@ export default function AccountPage() {
               </form>
             )}
             {error ? (
-              <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{error}</p>
+              <p className="text-xs text-destructive bg-destructive/10 rounded-lg p-3 font-semibold border border-destructive/20">{error}</p>
             ) : null}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
