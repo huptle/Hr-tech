@@ -7,87 +7,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Mail, KeyRound } from "lucide-react";
+import { Mail, LogIn } from "lucide-react";
 import { useCandidateStore } from "@/store/useCandidateStore";
 import { setSessionEmail } from "@/lib/candidate-session";
-import type { ResumeData } from "@/server/services/resume.types";
+import { profileFromSupabaseRow } from "@/lib/profile-from-row";
 
 export default function AccountPage() {
   const router = useRouter();
   const { setEmail, setProfile, setIsVerified } = useCandidateStore();
   const [email, setEmailLocal] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function sendOtp(e: React.FormEvent) {
+  async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    try {
-      const res = await fetch("/api/otp/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to send code");
-      setEmail(email);
-      setOtpSent(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to send code");
-    } finally {
+
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) {
       setLoading(false);
+      return;
     }
-  }
 
-  async function verifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
     try {
-      const res = await fetch("/api/otp/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
-      });
+      const res = await fetch(`/api/profile?email=${encodeURIComponent(normalized)}`);
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Invalid code");
-      }
 
-      const profRes = await fetch(`/api/profile?email=${encodeURIComponent(email)}`);
-      const profData = await profRes.json();
-      if (!profRes.ok || !profData.data) {
+      if (!res.ok || !data.data) {
         throw new Error(
-          "No saved profile for this email yet. Upload a resume from Get matched or Apply first.",
+          "No profile found for this email. Apply to a job or upload a resume first.",
         );
       }
 
-      const row = profData.data as Record<string, unknown>;
-      const parsed =
-        typeof row.parsed_data === "string"
-          ? (JSON.parse(row.parsed_data) as ResumeData)
-          : (row.parsed_data as ResumeData);
-
-      setSessionEmail(email);
+      setEmail(normalized);
+      setSessionEmail(normalized);
       setIsVerified(true);
-      setProfile({
-        name: String(row.name ?? ""),
-        email: String(row.email ?? email),
-        phone: String(row.phone ?? ""),
-        skills: Array.isArray(row.skills) ? (row.skills as string[]) : [],
-        experience: String(row.experience ?? ""),
-        education: String(row.education ?? ""),
-        summary: row.summary ? String(row.summary) : undefined,
-        resumeUrl: row.resume_url ? String(row.resume_url) : undefined,
-        parsed_data: parsed,
-      });
-
+      setProfile(profileFromSupabaseRow(data.data as Record<string, unknown>, normalized));
       router.push("/profile");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Verification failed");
+      setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {
       setLoading(false);
     }
