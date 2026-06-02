@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Mail, KeyRound, Sparkles } from "lucide-react";
+import { Mail, KeyRound } from "lucide-react";
 import { useCandidateStore } from "@/store/useCandidateStore";
 import { setSessionEmail } from "@/lib/candidate-session";
 import type { ResumeData } from "@/server/services/resume.types";

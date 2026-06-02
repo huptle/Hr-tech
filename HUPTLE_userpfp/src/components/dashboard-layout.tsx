@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, X, Home, Briefcase, Sparkles, UserCircle,
-  Bell, LogIn, LogOut, ChevronRight, Settings, Info, ExternalLink
+  Bell, LogIn, LogOut, ChevronRight
 } from "lucide-react";
 import { useCandidateStore } from "@/store/useCandidateStore";
 import { getSessionEmail, clearSessionEmail } from "@/lib/candidate-session";
@@ -18,12 +18,12 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { profile, reset, setProfile } = useCandidateStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sessionEmail, setSessionEmailLocal] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSessionEmailLocal(getSessionEmail());
   }, [profile]);
 
