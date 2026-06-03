@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApplyPortalHeader } from "@/components/apply-portal-header";
+import { DashboardLayout } from "@/components/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,50 +53,51 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <ApplyPortalHeader />
-      <main className="container mx-auto px-6 md:px-12 lg:px-20 py-16 max-w-md">
-        <Card className="rounded-2xl">
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>
-              Enter the email you used when applying or uploading a resume. No verification code
-              required.
+    <DashboardLayout>
+      <div className="container mx-auto px-6 md:px-8 py-16 max-w-md">
+        <Card className="rounded-2xl border-border bg-card shadow-lg">
+          <CardHeader className="space-y-2">
+            <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold uppercase tracking-wider w-fit">
+              Secure Access
+            </span>
+            <CardTitle className="text-xl font-extrabold text-foreground">Sign In to Profile</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
+              Enter the email you used when applying or uploading a resume. No verification code is required.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 pt-2">
             <form onSubmit={signIn} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email
+                <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-primary" /> Email Address
                 </Label>
                 <Input
                   id="email"
                   type="email"
                   required
-                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmailLocal(e.target.value)}
                   placeholder="you@email.com"
+                  className="h-11 border-border focus-visible:ring-primary/20"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading || !email.trim()}>
+              <Button type="submit" className="w-full h-11 text-sm font-bold shadow-md shadow-primary/10" disabled={loading || !email.trim()}>
                 {loading ? (
                   "Signing in…"
                 ) : (
                   <>
                     <LogIn className="w-4 h-4 mr-2" />
-                    Sign in
+                    Sign In
                   </>
                 )}
               </Button>
             </form>
             {error ? (
-              <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{error}</p>
+              <p className="text-xs text-destructive bg-destructive/10 rounded-lg p-3 font-semibold border border-destructive/20">{error}</p>
             ) : null}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

@@ -1,13 +1,12 @@
-import { ApplyPortalHeader } from "@/components/apply-portal-header";
+import { DashboardLayout } from "@/components/dashboard-layout";
 import { MatchResumeForm } from "@/components/match-resume-form";
 
 export default function MatchPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <ApplyPortalHeader />
-      <main className="container mx-auto px-6 md:px-12 lg:px-20 py-16 max-w-lg">
+    <DashboardLayout>
+      <div className="container mx-auto px-6 md:px-8 py-12 max-w-xl">
         <MatchResumeForm />
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
