@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import type { ResumeData } from "@/server/services/resume.types";
 import { getSessionEmail } from "@/lib/candidate-session";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { profileFromSupabaseRow } from "@/lib/profile-from-row";
 
 export default function ProfilePage() {
   const router = useRouter();

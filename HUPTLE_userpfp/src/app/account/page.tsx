@@ -62,61 +62,36 @@ export default function AccountPage() {
             </span>
             <CardTitle className="text-xl font-extrabold text-foreground">Sign In to Profile</CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              We will send you a one-time verification code via email. Please use the same email you entered when applying.
+              Enter the email you used when applying or uploading a resume. No verification code is required.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
-            {!otpSent ? (
-              <form onSubmit={sendOtp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-primary" /> Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmailLocal(e.target.value)}
-                    placeholder="you@email.com"
-                    className="h-11 border-border focus-visible:ring-primary/20"
-                  />
-                </div>
-                <Button type="submit" className="w-full h-11 text-sm font-bold shadow-md shadow-primary/10" disabled={loading || !email}>
-                  {loading ? "Sending…" : "Send Verification Code"}
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={verifyOtp} className="space-y-4">
-                <p className="text-xs text-muted-foreground">
-                  Verification code has been sent to <strong>{email}</strong>
-                </p>
-                <div className="space-y-2">
-                  <Label htmlFor="otp" className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5 text-primary" /> Verification Code
-                  </Label>
-                  <Input
-                    id="otp"
-                    required
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="123456"
-                    className="h-11 border-border focus-visible:ring-primary/20 text-center tracking-widest font-mono text-lg"
-                  />
-                </div>
-                <Button type="submit" className="w-full h-11 text-sm font-bold shadow-md shadow-primary/10" disabled={loading || !otp}>
-                  {loading ? "Verifying…" : "Verify and Open Profile"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-10 border-border hover:bg-accent text-xs font-bold"
-                  onClick={() => setOtpSent(false)}
-                >
-                  Use a different email
-                </Button>
-              </form>
-            )}
+            <form onSubmit={signIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-primary" /> Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmailLocal(e.target.value)}
+                  placeholder="you@email.com"
+                  className="h-11 border-border focus-visible:ring-primary/20"
+                />
+              </div>
+              <Button type="submit" className="w-full h-11 text-sm font-bold shadow-md shadow-primary/10" disabled={loading || !email.trim()}>
+                {loading ? (
+                  "Signing in…"
+                ) : (
+                  <>
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </>
+                )}
+              </Button>
+            </form>
             {error ? (
               <p className="text-xs text-destructive bg-destructive/10 rounded-lg p-3 font-semibold border border-destructive/20">{error}</p>
             ) : null}
