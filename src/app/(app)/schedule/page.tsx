@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { scopeFromUser, slotWhereOwned } from "@/lib/hr-scope";
 import { Bot, User2, Calendar, ArrowRight, Briefcase } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -22,11 +23,12 @@ function groupSlotsByDay<T extends { startsAt: Date }>(slots: T[]): Map<string, 
 }
 
 export default async function SchedulePage() {
-  await requireUser();
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
   const now = new Date();
 
   const upcoming = await prisma.interviewSlot.findMany({
-    where: { startsAt: { gte: now } },
+    where: { ...slotWhereOwned(scope), startsAt: { gte: now } },
     orderBy: { startsAt: "asc" },
     include: {
       candidate: { select: { id: true, name: true, email: true } },

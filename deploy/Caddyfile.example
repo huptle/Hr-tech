@@ -1,0 +1,26 @@
+# Reverse proxy for Huptle on huptle.com
+# Install Caddy on the VPS, then:
+#   sudo cp deploy/Caddyfile.example /etc/caddy/Caddyfile
+#   sudo caddy validate --config /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# DNS (at your registrar): A records → VPS public IP
+#   hr.huptle.com    → YOUR_VPS_IP
+#   apply.huptle.com → YOUR_VPS_IP
+#
+# Docker must listen on localhost (see docker-compose ports below).
+
+hr.huptle.com {
+	encode gzip zstd
+	reverse_proxy 127.0.0.1:3000
+}
+
+apply.huptle.com {
+	encode gzip zstd
+	reverse_proxy 127.0.0.1:3002
+}
+
+# Optional: redirect apex to apply or a marketing page
+# huptle.com, www.huptle.com {
+# 	redir https://apply.huptle.com{uri} permanent
+# }

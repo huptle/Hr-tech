@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
+import { assertTemplateAccess, scopeFromUser } from "@/lib/hr-scope";
 
 export async function createTemplate(formData: FormData) {
   const user = await requireUser();
@@ -27,7 +28,8 @@ export async function createTemplate(formData: FormData) {
 }
 
 export async function updateTemplate(templateId: string, formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
+  await assertTemplateAccess(templateId, scopeFromUser(user));
   const title = String(formData.get("title") ?? "").trim();
   const type = String(formData.get("type") ?? "Email").trim() || "Email";
   const category = String(formData.get("category") ?? "Other").trim() || "Other";
@@ -43,7 +45,8 @@ export async function updateTemplate(templateId: string, formData: FormData) {
 }
 
 export async function deleteTemplate(templateId: string) {
-  await requireUser();
+  const user = await requireUser();
+  await assertTemplateAccess(templateId, scopeFromUser(user));
   await prisma.template.delete({ where: { id: templateId } });
   revalidatePath("/templates");
 }

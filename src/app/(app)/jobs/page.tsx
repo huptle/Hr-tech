@@ -1,5 +1,7 @@
 import { createJob } from "@/app/actions/jobs";
 import { isGeminiConfigured } from "@/lib/gemini";
+import { requireUser } from "@/lib/auth";
+import { jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import {
@@ -21,8 +23,11 @@ import { CreateJobFormModal, JobRowActions } from "./components";
 export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
-  const geminiReady = isGeminiConfigured();
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const aiReady = isGeminiConfigured();
   const jobs = await prisma.job.findMany({
+    where: jobWhereOwned(scope),
     orderBy: { updatedAt: "desc" },
     include: {
       _count: { select: { candidates: true } },
@@ -52,7 +57,7 @@ export default async function JobsPage() {
               </p>
             </div>
             <div className="shrink-0 mt-2 sm:mt-0">
-              <CreateJobFormModal action={createJob} geminiReady={geminiReady} />
+              <CreateJobFormModal action={createJob} aiReady={aiReady} />
             </div>
           </div>
         </PageLayout>

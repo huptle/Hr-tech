@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import {
+  candidateWhereOwned,
+  jobWhereOwned,
+  scopeFromUser,
+} from "@/lib/hr-scope";
 import { HBarChart, LineChart } from "@/components/Charts";
 import { BarChart3, Users, Clock, TrendingUp } from "lucide-react";
 
@@ -11,7 +16,10 @@ function daysBetween(a: Date, b: Date): number {
 }
 
 export default async function ReportsPage() {
-  await requireUser();
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const jobFilter = jobWhereOwned(scope);
+  const candFilter = candidateWhereOwned(scope);
   const now = new Date();
   const sixWeeksAgo = new Date(now.getTime() - 6 * 7 * 24 * 60 * 60 * 1000);
 
@@ -25,24 +33,32 @@ export default async function ReportsPage() {
     weeklySource,
     activeJobs,
   ] = await Promise.all([
-    prisma.candidate.count(),
+    prisma.candidate.count({ where: candFilter }),
     prisma.candidate.count({
-      where: { journey: { in: ["Shortlisted", "Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"] } },
+      where: {
+        ...candFilter,
+        journey: { in: ["Shortlisted", "Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"] },
+      },
     }),
     prisma.candidate.count({
-      where: { journey: { in: ["Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"] } },
+      where: {
+        ...candFilter,
+        journey: { in: ["Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"] },
+      },
     }),
-    prisma.candidate.count({ where: { journey: { in: ["Offer Sent", "Offer Accepted"] } } }),
-    prisma.candidate.count({ where: { journey: "Offer Accepted" } }),
+    prisma.candidate.count({
+      where: { ...candFilter, journey: { in: ["Offer Sent", "Offer Accepted"] } },
+    }),
+    prisma.candidate.count({ where: { ...candFilter, journey: "Offer Accepted" } }),
     prisma.candidate.findMany({
-      where: { journey: "Offer Accepted" },
+      where: { ...candFilter, journey: "Offer Accepted" },
       select: { createdAt: true, updatedAt: true },
     }),
     prisma.candidate.findMany({
-      where: { createdAt: { gte: sixWeeksAgo } },
+      where: { ...candFilter, createdAt: { gte: sixWeeksAgo } },
       select: { createdAt: true },
     }),
-    prisma.job.count({ where: { status: "Live" } }),
+    prisma.job.count({ where: { ...jobFilter, status: "Live" } }),
   ]);
 
   const funnel = [

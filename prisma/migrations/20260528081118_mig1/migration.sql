@@ -9,6 +9,9 @@ CREATE TABLE "HrUser" (
     "company" TEXT NOT NULL DEFAULT '',
     "phone" TEXT NOT NULL DEFAULT '',
     "isAdmin" BOOLEAN NOT NULL DEFAULT false,
+    "googleAccessToken" TEXT NOT NULL DEFAULT '',
+    "googleRefreshToken" TEXT NOT NULL DEFAULT '',
+    "googleTokenExpiry" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -25,6 +28,7 @@ CREATE TABLE "Job" (
     "dept" TEXT NOT NULL DEFAULT '',
     "location" TEXT NOT NULL DEFAULT '',
     "mode" TEXT NOT NULL DEFAULT 'Remote',
+    "createdById" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -58,6 +62,9 @@ CREATE TABLE "Candidate" (
     "voiceTranscriptNotes" TEXT NOT NULL DEFAULT '',
     "aiSummary" TEXT NOT NULL DEFAULT '',
     "asyncScreeningAnswers" TEXT NOT NULL DEFAULT '',
+    "resumeUrl" TEXT NOT NULL DEFAULT '',
+    "externalProfileId" TEXT NOT NULL DEFAULT '',
+    "parsedDataJson" TEXT NOT NULL DEFAULT '',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -103,8 +110,44 @@ CREATE TABLE "Activity" (
     CONSTRAINT "Activity_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "SchedulingCallCampaign" (
+    "id" TEXT NOT NULL,
+    "jobId" TEXT NOT NULL,
+    "actorId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "SchedulingCallCampaign_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SchedulingCall" (
+    "id" TEXT NOT NULL,
+    "campaignId" TEXT NOT NULL,
+    "candidateId" TEXT NOT NULL,
+    "phoneE164" TEXT NOT NULL,
+    "vapiCallId" TEXT NOT NULL DEFAULT '',
+    "status" TEXT NOT NULL DEFAULT 'queued',
+    "transcript" TEXT NOT NULL DEFAULT '',
+    "parsedAvailability" TEXT NOT NULL DEFAULT '',
+    "bookedSlotId" TEXT,
+    "errorMessage" TEXT NOT NULL DEFAULT '',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "SchedulingCall_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "HrUser_email_key" ON "HrUser"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Candidate_jobId_email_key" ON "Candidate"("jobId", "email");
+
+-- AddForeignKey
+ALTER TABLE "Job" ADD CONSTRAINT "Job_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "HrUser"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ScreeningQuestion" ADD CONSTRAINT "ScreeningQuestion_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -129,3 +172,15 @@ ALTER TABLE "Activity" ADD CONSTRAINT "Activity_candidateId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "Activity" ADD CONSTRAINT "Activity_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SchedulingCallCampaign" ADD CONSTRAINT "SchedulingCallCampaign_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SchedulingCallCampaign" ADD CONSTRAINT "SchedulingCallCampaign_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "HrUser"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SchedulingCall" ADD CONSTRAINT "SchedulingCall_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "SchedulingCallCampaign"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SchedulingCall" ADD CONSTRAINT "SchedulingCall_candidateId_fkey" FOREIGN KEY ("candidateId") REFERENCES "Candidate"("id") ON DELETE CASCADE ON UPDATE CASCADE;

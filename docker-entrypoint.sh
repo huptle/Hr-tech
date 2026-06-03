@@ -11,8 +11,9 @@ if [ -z "${AUTH_SECRET:-}" ] || [ "${#AUTH_SECRET}" -lt 16 ]; then
 fi
 
 echo "[entrypoint] Applying Prisma schema..."
-prisma db push --skip-generate || {
-  echo "[entrypoint] prisma db push failed" >&2
+# --accept-data-loss: required for non-interactive deploy when adding constraints/columns.
+prisma db push --skip-generate --accept-data-loss || {
+  echo "[entrypoint] prisma db push failed (check for duplicate Candidate jobId+email rows)" >&2
   exit 1
 }
 

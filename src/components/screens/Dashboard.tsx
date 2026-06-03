@@ -151,7 +151,7 @@ function PremiumModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-[500px] bg-surface border border-accent/30 rounded-3xl overflow-hidden shadow-2xl relative"
       >
-        <div className="bg-accent-deep p-8 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-accent p-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 opacity-20 pointer-events-none">
             <svg width="260" height="140" viewBox="0 0 260 140">
               <circle cx="200" cy="60" r="110" fill="white" />
@@ -246,6 +246,8 @@ export type DashboardProps = {
   stats: DashboardStats;
   funnel: DashboardFunnel;
   weekly: DashboardWeekly;
+  /** "mine" = signed-in HR only; "all" = admins see every HR's actions */
+  activityScope?: "mine" | "all";
 };
 
 export function Dashboard({
@@ -257,6 +259,7 @@ export function Dashboard({
   stats,
   funnel,
   weekly,
+  activityScope = "mine",
 }: DashboardProps) {
   const [showPremium, setShowPremium] = useState(false);
 
@@ -280,7 +283,7 @@ export function Dashboard({
           </Link>
           <Link
             href="/jobs"
-            className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-accent/25 hover:shadow-accent/40 transition-all"
+            className="inline-flex items-center gap-2 rounded-xl gradient-bg px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
           >
             <Plus size={18} strokeWidth={3} /> Post a job
           </Link>
@@ -318,7 +321,7 @@ export function Dashboard({
               <p className="text-sm text-text-muted">No jobs yet — post your first one to get started.</p>
               <Link
                 href="/jobs"
-                className="inline-flex items-center gap-2 mt-4 rounded-xl bg-accent px-4 py-2 text-xs font-bold text-white"
+                className="inline-flex items-center gap-2 mt-4 rounded-xl gradient-bg px-4 py-2 text-xs font-bold text-white"
               >
                 <Plus size={14} /> Post a job
               </Link>
@@ -381,7 +384,7 @@ export function Dashboard({
             )}
           </div>
 
-          <div className="bg-accent/5 border border-accent/20 rounded-2xl p-5 relative overflow-hidden group">
+          <div className="bg-gradient-to-br from-indigo-600/10 to-transparent border border-accent/20 rounded-2xl p-5 relative overflow-hidden group">
             <div className="absolute -top-4 -right-4 text-accent/5 rotate-12 transition-transform group-hover:scale-110 group-hover:rotate-0">
               <Sparkles size={120} />
             </div>
@@ -436,10 +439,14 @@ export function Dashboard({
             <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center">
               <MessageSquare size={16} />
             </div>
-            <h2 className="text-sm font-bold text-text-primary">Recent activity</h2>
+            <h2 className="text-sm font-bold text-text-primary">
+              {activityScope === "all" ? "Recent activity (all HR)" : "Your recent activity"}
+            </h2>
           </div>
           {activity.length === 0 ? (
-            <p className="text-xs text-text-muted py-6 text-center">No activity yet.</p>
+            <p className="text-xs text-text-muted py-6 text-center">
+              {activityScope === "all" ? "No activity yet." : "No activity from you yet."}
+            </p>
           ) : (
             <div className="flex flex-col">
               {activity.map((a, i) => <ActivityRow key={i} a={a} />)}

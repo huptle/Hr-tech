@@ -155,29 +155,6 @@ jobs:
             mkdir -p "$VPS_APP_PATH"
             cd "$VPS_APP_PATH"
             [ -f .env ] || touch .env
-            if grep -q '^DOCKER_IMAGE=' .env; then
-              sed -i "s|^DOCKER_IMAGE=.*|DOCKER_IMAGE=${DOCKER_IMAGE}|" .env
-            else
-              echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> .env
-            fi
-            if grep -q '^APPLY_DOCKER_IMAGE=' .env; then
-              sed -i "s|^APPLY_DOCKER_IMAGE=.*|APPLY_DOCKER_IMAGE=${APPLY_DOCKER_IMAGE}|" .env
-            else
-              echo "APPLY_DOCKER_IMAGE=${APPLY_DOCKER_IMAGE}" >> .env
-            fi
-            # Dev stack only (prod folder unchanged): avoid port clash with live 3000 / 3002.
-            if grep -q '^APP_PORT=' .env; then
-              sed -i 's|^APP_PORT=.*|APP_PORT=3001|' .env
-            else
-              echo 'APP_PORT=3001' >> .env
-            fi
-            if grep -q '^APPLY_PORT=' .env; then
-              sed -i 's|^APPLY_PORT=.*|APPLY_PORT=3003|' .env
-            else
-              echo 'APPLY_PORT=3003' >> .env
-            fi
-            export DOCKER_IMAGE
-            export APPLY_DOCKER_IMAGE
 
             login_ok=0
             for i in 1 2 3; do

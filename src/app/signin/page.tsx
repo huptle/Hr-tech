@@ -8,7 +8,7 @@ export default function SignInPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-background px-6 py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-white text-lg font-black shadow-xl shadow-accent/30">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white text-lg font-black shadow-xl shadow-indigo-500/30">
             H
           </div>
           <h1 className="text-2xl font-black text-text-primary tracking-tight">

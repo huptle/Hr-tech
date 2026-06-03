@@ -1,5 +1,7 @@
 import { markCandidateSelected } from "@/app/actions/candidates";
 import { isGeminiConfigured } from "@/lib/gemini";
+import { requireUser } from "@/lib/auth";
+import { jobWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { prisma } from "@/lib/prisma";
 import { ShortlistAiPanel } from "@/components/ai/shortlist-ai-panel";
 import { notFound } from "next/navigation";
@@ -23,8 +25,10 @@ type PageProps = { params: Promise<{ jobId: string }> };
 
 export default async function ShortlistPage({ params }: PageProps) {
   const { jobId } = await params;
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, ...jobWhereOwned(scope) },
     include: {
       candidates: {
         where: { rankScore: { not: null } },
@@ -35,7 +39,7 @@ export default async function ShortlistPage({ params }: PageProps) {
 
   if (!job) notFound();
 
-  const geminiReady = isGeminiConfigured();
+  const aiReady = isGeminiConfigured();
   const top = job.candidates.slice(0, 10);
 
   return (
@@ -54,9 +58,9 @@ export default async function ShortlistPage({ params }: PageProps) {
                 Top candidates
               </h1>
               <p className="mt-1.5 text-sm text-text-secondary">
-                {geminiReady
-                  ? "Ranked with Gemini when you run screening; use tools below for panel narratives."
-                  : "Ranked by simulated scores — add GEMINI_API_KEY for AI screening and summaries."}
+                {aiReady
+                  ? "Ranked with AI when you run screening; use tools below for panel narratives."
+                  : "Ranked by simulated scores — configure AI on the server for screening and summaries."}
               </p>
             </div>
             <div className="flex gap-2.5 flex-wrap">
@@ -96,7 +100,7 @@ export default async function ShortlistPage({ params }: PageProps) {
           </FadeUp>
         ) : (
           <Section delay={0.05}>
-            {geminiReady && (
+            {aiReady && (
               <ShortlistAiPanel
                 jobId={job.id}
                 candidates={top.map((c) => ({
@@ -115,7 +119,7 @@ export default async function ShortlistPage({ params }: PageProps) {
                   >
                     <div className="flex gap-4 items-start">
                       {/* Rank badge */}
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent shadow-lg shadow-accent/20 text-sm font-bold text-white">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl gradient-bg shadow-lg shadow-accent/20 text-sm font-bold text-white">
                         {idx === 0 ? (
                           <Trophy className="h-5 w-5" />
                         ) : (

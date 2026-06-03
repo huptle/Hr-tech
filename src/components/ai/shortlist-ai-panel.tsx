@@ -60,7 +60,7 @@ export function ShortlistAiPanel({
           <div>
             <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-accent" />
-              Panel comparison (Gemini)
+              Panel comparison (AI)
             </h2>
             <p className="text-xs text-text-muted mt-1">
               Compare top candidates and tradeoffs for this req.

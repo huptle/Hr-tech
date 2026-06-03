@@ -2,6 +2,13 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/activity";
+import {
+  activityWhereOwned,
+  candidateWhereOwned,
+  jobWhereOwned,
+  slotWhereOwned,
+  type HrScope,
+} from "@/lib/hr-scope";
 import type {
   DashboardJob,
   DashboardUpcoming,
@@ -51,7 +58,7 @@ function formatWhen(d: Date): string {
   return d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" });
 }
 
-export async function getDashboardData(): Promise<{
+export async function getDashboardData(scope: HrScope): Promise<{
   jobs: DashboardJob[];
   totalJobsCount: number;
   upcoming: DashboardUpcoming[];
@@ -64,6 +71,11 @@ export async function getDashboardData(): Promise<{
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const eightWeeksAgo = new Date(now.getTime() - 8 * 7 * 24 * 60 * 60 * 1000);
+
+  const jobFilter = jobWhereOwned(scope);
+  const candFilter = candidateWhereOwned(scope);
+  const slotFilter = slotWhereOwned(scope);
+  const actFilter = activityWhereOwned(scope);
 
   const [
     totalJobsCount,
@@ -82,10 +94,11 @@ export async function getDashboardData(): Promise<{
     funnelCounts,
     weeklyApplicants,
   ] = await Promise.all([
-    prisma.job.count(),
-    prisma.job.count({ where: { status: "Live" } }),
-    prisma.job.count({ where: { status: "Draft" } }),
+    prisma.job.count({ where: jobFilter }),
+    prisma.job.count({ where: { ...jobFilter, status: "Live" } }),
+    prisma.job.count({ where: { ...jobFilter, status: "Draft" } }),
     prisma.job.findMany({
+      where: jobFilter,
       orderBy: { updatedAt: "desc" },
       take: 5,
       include: {
@@ -93,19 +106,34 @@ export async function getDashboardData(): Promise<{
         candidates: { select: { journey: true } },
       },
     }),
-    prisma.candidate.count(),
-    prisma.candidate.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-    prisma.interviewSlot.count(),
-    prisma.interviewSlot.count({ where: { mode: "ai" } }),
-    prisma.interviewSlot.count({
-      where: { startsAt: { gte: now, lte: endOfDay(now) } },
-    }),
-    prisma.candidate.count({ where: { journey: "Offer Accepted" } }),
+    prisma.candidate.count({ where: candFilter }),
     prisma.candidate.count({
-      where: { journey: "Offer Accepted", updatedAt: { gte: thirtyDaysAgo } },
+      where: { ...candFilter, createdAt: { gte: sevenDaysAgo } },
+    }),
+    prisma.interviewSlot.count({ where: slotFilter }),
+    prisma.interviewSlot.count({ where: { ...slotFilter, mode: "ai" } }),
+    prisma.interviewSlot.count({
+      where: {
+        ...slotFilter,
+        startsAt: { gte: now, lte: endOfDay(now) },
+      },
+    }),
+    prisma.candidate.count({
+      where: { ...candFilter, journey: "Offer Accepted" },
+    }),
+    prisma.candidate.count({
+      where: {
+        ...candFilter,
+        journey: "Offer Accepted",
+        updatedAt: { gte: thirtyDaysAgo },
+      },
     }),
     prisma.interviewSlot.findMany({
-      where: { startsAt: { gte: now }, candidateId: { not: null } },
+      where: {
+        ...slotFilter,
+        startsAt: { gte: now },
+        candidateId: { not: null },
+      },
       orderBy: { startsAt: "asc" },
       take: 4,
       include: {
@@ -114,19 +142,41 @@ export async function getDashboardData(): Promise<{
       },
     }),
     prisma.activity.findMany({
+      where: actFilter,
       orderBy: { createdAt: "desc" },
       take: 6,
       include: { actor: { select: { name: true } } },
     }),
     Promise.all([
-      prisma.candidate.count(),
-      prisma.candidate.count({ where: { journey: { in: ["Shortlisted", "Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"] } } }),
-      prisma.candidate.count({ where: { journey: { in: ["Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"] } } }),
-      prisma.candidate.count({ where: { journey: { in: ["Offer Sent", "Offer Accepted"] } } }),
-      prisma.candidate.count({ where: { journey: "Offer Accepted" } }),
+      prisma.candidate.count({ where: candFilter }),
+      prisma.candidate.count({
+        where: {
+          ...candFilter,
+          journey: {
+            in: ["Shortlisted", "Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"],
+          },
+        },
+      }),
+      prisma.candidate.count({
+        where: {
+          ...candFilter,
+          journey: {
+            in: ["Round 1", "Round 2", "Round 3", "Offer Sent", "Offer Accepted"],
+          },
+        },
+      }),
+      prisma.candidate.count({
+        where: {
+          ...candFilter,
+          journey: { in: ["Offer Sent", "Offer Accepted"] },
+        },
+      }),
+      prisma.candidate.count({
+        where: { ...candFilter, journey: "Offer Accepted" },
+      }),
     ]),
     prisma.candidate.findMany({
-      where: { createdAt: { gte: eightWeeksAgo } },
+      where: { ...candFilter, createdAt: { gte: eightWeeksAgo } },
       select: { createdAt: true },
     }),
   ]);

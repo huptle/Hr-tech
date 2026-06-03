@@ -1,4 +1,6 @@
 import { AsyncScreeningForm } from "./async-screen-form";
+import { requireUser } from "@/lib/auth";
+import { candidateWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/motion-wrappers";
@@ -10,8 +12,10 @@ type PageProps = { params: Promise<{ jobId: string; candidateId: string }> };
 
 export default async function AsyncScreenPage({ params }: PageProps) {
   const { jobId, candidateId } = await params;
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
   const cand = await prisma.candidate.findFirst({
-    where: { id: candidateId, jobId },
+    where: { id: candidateId, jobId, ...candidateWhereOwned(scope) },
     include: {
       job: {
         include: { questions: { orderBy: { order: "asc" } } },
@@ -32,7 +36,7 @@ export default async function AsyncScreenPage({ params }: PageProps) {
             Async text screening
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            {cand.name} — answer each question; Gemini scores and updates the candidate
+            {cand.name} — answer each question; AI scores and updates the candidate
             profile (same fields as voice screening).
           </p>
         </PageLayout>

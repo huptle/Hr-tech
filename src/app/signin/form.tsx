@@ -49,7 +49,7 @@ export function SignInForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all duration-200 hover:shadow-accent/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:hover:scale-100"
+        className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl gradient-bg px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:hover:scale-100"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

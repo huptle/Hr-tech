@@ -1,8 +1,10 @@
 # Production: runs only when code lands on `main` (includes merges from PRs).
 # Does NOT run on pull_request events — open PRs against main are not built here.
 #
-# Secrets (same as before):
+# Secrets:
 #   VPS_HOST, VPS_USER, VPS_SSH_KEY, VPS_APP_PATH, GHCR_USER, GHCR_READ_TOKEN
+# GHCR_READ_TOKEN = GitHub PAT (classic) with read:packages (authorize SSO for org if applicable).
+# VPS needs: deploy folder with .env (DATABASE_URL, AUTH_SECRET, …). No git fetch on server.
 #
 # Repo → Settings → Actions → Workflow permissions → Read and write (for GHCR push).
 
@@ -60,6 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       docker_image: ${{ steps.meta.outputs.docker_image }}
+      apply_docker_image: ${{ steps.meta.outputs.apply_docker_image }}
     steps:
       - uses: actions/checkout@v4
 
@@ -69,6 +72,8 @@ jobs:
           lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "docker_image=ghcr.io/${lower}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
           echo "docker_image_latest=ghcr.io/${lower}:latest" >> "$GITHUB_OUTPUT"
+          echo "apply_docker_image=ghcr.io/${lower}:apply-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "apply_docker_image_latest=ghcr.io/${lower}:apply-latest" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -80,7 +85,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push HR app
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -91,30 +96,71 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push candidate apply portal
+        uses: docker/build-push-action@v6
+        with:
+          context: ./HUPTLE_userpfp
+          file: ./HUPTLE_userpfp/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.apply_docker_image }}
+            ${{ steps.meta.outputs.apply_docker_image_latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy docker-compose.yml to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: docker-compose.yml
+          target: ${{ secrets.VPS_APP_PATH }}
+
       - name: Deploy production over SSH
         uses: appleboy/ssh-action@v1.2.5
         env:
           VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
-          DEPLOY_BRANCH: main
           DOCKER_IMAGE: ${{ needs.build-and-push.outputs.docker_image }}
+          APPLY_DOCKER_IMAGE: ${{ needs.build-and-push.outputs.apply_docker_image }}
           GHCR_USER: ${{ secrets.GHCR_USER }}
           GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: VPS_APP_PATH,DEPLOY_BRANCH,DOCKER_IMAGE,GHCR_USER,GHCR_READ_TOKEN
+          envs: VPS_APP_PATH,DOCKER_IMAGE,APPLY_DOCKER_IMAGE,GHCR_USER,GHCR_READ_TOKEN
           script: |
             set -e
+            if [ -z "$VPS_APP_PATH" ]; then
+              echo "FATAL: VPS_APP_PATH secret is not set." >&2
+              exit 1
+            fi
+            if [ -z "$GHCR_READ_TOKEN" ]; then
+              echo "FATAL: GHCR_READ_TOKEN secret is not set." >&2
+              exit 1
+            fi
+            mkdir -p "$VPS_APP_PATH"
             cd "$VPS_APP_PATH"
-            git fetch origin
-            git checkout "$DEPLOY_BRANCH"
-            git reset --hard "origin/$DEPLOY_BRANCH"
             [ -f .env ] || touch .env
+            if grep -q '^DOCKER_IMAGE=' .env; then
+              sed -i "s|^DOCKER_IMAGE=.*|DOCKER_IMAGE=${DOCKER_IMAGE}|" .env
+            else
+              echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> .env
+            fi
+            if grep -q '^APPLY_DOCKER_IMAGE=' .env; then
+              sed -i "s|^APPLY_DOCKER_IMAGE=.*|APPLY_DOCKER_IMAGE=${APPLY_DOCKER_IMAGE}|" .env
+            else
+              echo "APPLY_DOCKER_IMAGE=${APPLY_DOCKER_IMAGE}" >> .env
+            fi
+            export DOCKER_IMAGE
+            export APPLY_DOCKER_IMAGE
 
             login_ok=0
             for i in 1 2 3; do
@@ -129,8 +175,6 @@ jobs:
               echo "FATAL: docker login ghcr.io failed after 3 attempts." >&2
               exit 1
             fi
-
-            export DOCKER_IMAGE
 
             pull_ok=0
             for i in 1 2 3; do

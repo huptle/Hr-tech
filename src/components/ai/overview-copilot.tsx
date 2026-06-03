@@ -47,7 +47,7 @@ export function OverviewCopilot() {
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-accent" />
         <h2 className="text-sm font-semibold text-text-primary">
-          Recruitment copilot (Gemini)
+          Recruitment copilot (AI)
         </h2>
       </div>
       <p className="text-xs text-text-muted leading-relaxed">
@@ -94,7 +94,7 @@ export function OverviewCopilot() {
         ) : (
           <Sparkles className="h-4 w-4" />
         )}
-        Ask Gemini
+        Ask AI
       </BtnPrimary>
 
       {error && (

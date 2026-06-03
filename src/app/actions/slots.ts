@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
+import { assertJobAccess, scopeFromUser } from "@/lib/hr-scope";
 
 function parseSlotTimes(formData: FormData): {
   startsAt: Date;
@@ -25,6 +26,7 @@ function parseSlotTimes(formData: FormData): {
 
 export async function createInterviewSlot(jobId: string, formData: FormData) {
   const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   const parsed = parseSlotTimes(formData);
   if (!parsed) return;
   const mode = String(formData.get("mode") ?? "hr");
@@ -58,6 +60,7 @@ export async function assignSlotToCandidate(
   formData: FormData,
 ) {
   const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   const candidateId = String(formData.get("candidateId") ?? "").trim();
   if (!candidateId) {
     await prisma.interviewSlot.update({
@@ -90,7 +93,8 @@ export async function assignSlotToCandidate(
 }
 
 export async function deleteInterviewSlot(slotId: string, jobId: string) {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   await prisma.interviewSlot.delete({ where: { id: slotId } });
   revalidatePath(`/jobs/${jobId}/schedule`);
   revalidatePath(`/jobs/${jobId}`);

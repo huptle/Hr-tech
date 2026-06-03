@@ -2,16 +2,29 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth";
+import {
+  assertJobAccess,
+  candidateWhereOwned,
+  jobWhereOwned,
+  scopeFromUser,
+} from "@/lib/hr-scope";
 import {
   geminiGenerateJson,
   geminiGenerateText,
   isGeminiConfigured,
 } from "@/lib/gemini";
 
+async function guardJob(jobId: string) {
+  const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
+  return user;
+}
+
 function requireGemini() {
   if (!isGeminiConfigured()) {
     throw new Error(
-      "Gemini is not configured. Add GEMINI_API_KEY to .env.local and restart the dev server.",
+      "AI is not configured. Add GEMINI_API_KEY to .env.local and restart the dev server.",
     );
   }
 }
@@ -59,6 +72,7 @@ Return JSON with this exact shape:
 
 export async function polishJobDescriptionDraft(jobId: string) {
   requireGemini();
+  await guardJob(jobId);
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) throw new Error("Job not found");
 
@@ -76,6 +90,7 @@ ${job.description || "(empty)"}`;
 
 export async function replaceJobScreeningQuestionsWithAi(jobId: string) {
   requireGemini();
+  await guardJob(jobId);
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     include: { questions: { orderBy: { order: "asc" } } },
@@ -124,18 +139,29 @@ type ScreeningBatch = {
   }>;
 };
 
-export async function runGeminiVoiceScreening(jobId: string) {
+export async function runGeminiVoiceScreening(
+  jobId: string,
+  rescoreAll = false,
+): Promise<{ ok: boolean; message: string }> {
   requireGemini();
+  await guardJob(jobId);
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     include: {
       questions: { orderBy: { order: "asc" } },
-      candidates: { where: { rankScore: null } },
+      candidates: rescoreAll
+        ? { orderBy: { createdAt: "asc" } }
+        : { where: { rankScore: null }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!job) throw new Error("Job not found");
   if (job.candidates.length === 0) {
-    return { ok: true, message: "No unscored candidates." };
+    return {
+      ok: false,
+      message: rescoreAll
+        ? "No candidates on this job."
+        : "No unscored candidates. Use “Re-run screening” to refresh all scores with AI.",
+    };
   }
 
   const qText = job.questions.map((q, i) => `${i + 1}. ${q.text}`).join("\n");
@@ -191,13 +217,14 @@ Include every candidate id exactly once.`;
     });
   }
 
-  return { ok: true, message: `Scored ${job.candidates.length} candidate(s) with Gemini.` };
+  return { ok: true, message: `Scored ${job.candidates.length} candidate(s) with AI.` };
 }
 
 // ─── Shortlist: compare top candidates ───────────────────────────────────────
 
 export async function generateShortlistComparison(jobId: string) {
   requireGemini();
+  await guardJob(jobId);
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     include: {
@@ -233,8 +260,10 @@ Write a concise comparison for the hiring panel: tradeoffs, who to advance first
 
 export async function refreshCandidateAiSummary(candidateId: string, jobId: string) {
   requireGemini();
+  const user = await guardJob(jobId);
+  const scope = scopeFromUser(user);
   const c = await prisma.candidate.findFirst({
-    where: { id: candidateId, jobId },
+    where: { id: candidateId, jobId, ...candidateWhereOwned(scope) },
     include: { job: { include: { questions: { orderBy: { order: "asc" } } } } },
   });
   if (!c) throw new Error("Candidate not found");
@@ -264,6 +293,7 @@ Output plain text only, one paragraph.`;
 
 export async function draftInterviewInviteEmail(slotId: string, jobId: string) {
   requireGemini();
+  await guardJob(jobId);
   const slot = await prisma.interviewSlot.findFirst({
     where: { id: slotId, jobId },
     include: { candidate: true, job: true },
@@ -285,8 +315,10 @@ Tone: warm, concise. Include calendar placeholder line. No HTML.`;
 
 export async function draftRejectionEmail(candidateId: string, jobId: string) {
   requireGemini();
+  const user = await guardJob(jobId);
+  const scope = scopeFromUser(user);
   const c = await prisma.candidate.findFirst({
-    where: { id: candidateId, jobId },
+    where: { id: candidateId, jobId, ...candidateWhereOwned(scope) },
     include: { job: true },
   });
   if (!c) throw new Error("Candidate not found");
@@ -302,8 +334,10 @@ Keep it short, kind, no legal promises, encourage future roles. Plain text.`;
 
 export async function draftOfferEmail(candidateId: string, jobId: string) {
   requireGemini();
+  const user = await guardJob(jobId);
+  const scope = scopeFromUser(user);
   const c = await prisma.candidate.findFirst({
-    where: { id: candidateId, jobId },
+    where: { id: candidateId, jobId, ...candidateWhereOwned(scope) },
     include: { job: true },
   });
   if (!c) throw new Error("Candidate not found");
@@ -321,17 +355,23 @@ Professional, celebratory but cautious (mentions background check placeholder). 
 
 export async function recruitingCopilotAsk(userQuestion: string) {
   requireGemini();
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const jobFilter = jobWhereOwned(scope);
+  const candFilter = candidateWhereOwned(scope);
   const q = userQuestion.trim();
   if (!q) throw new Error("Enter a question.");
 
   const [jobCount, candCount, byStatus, recentJobs] = await Promise.all([
-    prisma.job.count(),
-    prisma.candidate.count(),
+    prisma.job.count({ where: jobFilter }),
+    prisma.candidate.count({ where: candFilter }),
     prisma.candidate.groupBy({
       by: ["status"],
+      where: candFilter,
       _count: { id: true },
     }),
     prisma.job.findMany({
+      where: jobFilter,
       take: 8,
       orderBy: { updatedAt: "desc" },
       include: { _count: { select: { candidates: true } } },
@@ -360,11 +400,16 @@ Answer the recruiter's question using this data. If data is insufficient, say wh
 
 export async function recruitingFunnelInsight() {
   requireGemini();
+  const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const jobFilter = jobWhereOwned(scope);
+  const candFilter = candidateWhereOwned(scope);
   const [jobCount, candCount, byStatus] = await Promise.all([
-    prisma.job.count(),
-    prisma.candidate.count(),
+    prisma.job.count({ where: jobFilter }),
+    prisma.candidate.count({ where: candFilter }),
     prisma.candidate.groupBy({
       by: ["status"],
+      where: candFilter,
       _count: { id: true },
     }),
   ]);
@@ -394,12 +439,14 @@ export async function submitAsyncScreening(
   payload: { question: string; answer: string }[],
 ) {
   requireGemini();
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
+  const user = await guardJob(jobId);
+  const scope = scopeFromUser(user);
+  const job = await prisma.job.findFirst({
+    where: { id: jobId, ...jobWhereOwned(scope) },
     include: { questions: { orderBy: { order: "asc" } } },
   });
   const cand = await prisma.candidate.findFirst({
-    where: { id: candidateId, jobId },
+    where: { id: candidateId, jobId, ...candidateWhereOwned(scope) },
   });
   if (!job || !cand) throw new Error("Not found");
 

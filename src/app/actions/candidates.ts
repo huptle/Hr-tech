@@ -4,9 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
+import { assertJobAccess, candidateWhereOwned, scopeFromUser } from "@/lib/hr-scope";
 
 export async function createCandidate(jobId: string, formData: FormData) {
   const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
@@ -46,7 +48,8 @@ export async function createCandidate(jobId: string, formData: FormData) {
 }
 
 export async function deleteCandidate(candidateId: string, jobId: string) {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   await prisma.candidate.delete({ where: { id: candidateId } });
   revalidatePath(`/jobs/${jobId}`);
   revalidatePath(`/jobs/${jobId}/shortlist`);
@@ -59,6 +62,7 @@ export async function markCandidateSelected(
   jobId: string,
 ) {
   const user = await requireUser();
+  await assertJobAccess(jobId, scopeFromUser(user));
   await prisma.candidate.updateMany({
     where: { jobId, status: "selected" },
     data: { status: "shortlisted", journey: "Shortlisted" },
@@ -87,6 +91,12 @@ export async function updateCandidateJourney(
   journey: string,
 ) {
   const user = await requireUser();
+  const scope = scopeFromUser(user);
+  const existing = await prisma.candidate.findFirst({
+    where: { id: candidateId, ...candidateWhereOwned(scope) },
+    select: { jobId: true },
+  });
+  if (!existing) throw new Error("Candidate not found or access denied.");
   const cand = await prisma.candidate.update({
     where: { id: candidateId },
     data: { journey },
