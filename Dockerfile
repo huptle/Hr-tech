@@ -29,8 +29,8 @@ RUN apk add --no-cache libc6-compat openssl tini
 
 # Install Prisma CLI globally so the entrypoint can run `prisma db push` on boot.
 # The standalone Next.js output only ships runtime deps; prisma is a dev dep.
-# Keep the version in lockstep with package.json.
-RUN npm install -g prisma@6.19.2 && npm cache clean --force
+# Keep the version in lockstep with package.json (^6.19.3).
+RUN npm install -g prisma@6.19.3 && npm cache clean --force
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

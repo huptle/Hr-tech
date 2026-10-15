@@ -9,6 +9,7 @@
   /* near-black navy */
   --surface: 220 70% 8%;
   --surface-2: 220 60% 12%;
+  --surface-3: 220 50% 16%;
   --border: 220 40% 18%;
   --border-subtle: 220 35% 13%;
 
@@ -36,6 +37,7 @@
   --background: 0 0% 97%;
   --surface: 0 0% 100%;
   --surface-2: 220 20% 94%;
+  --surface-3: 220 15% 88%;
   --border: 220 20% 85%;
   --border-subtle: 220 18% 90%;
 
@@ -57,6 +59,7 @@
   --color-background: hsl(var(--background));
   --color-surface: hsl(var(--surface));
   --color-surface-2: hsl(var(--surface-2));
+  --color-surface-3: hsl(var(--surface-3));
   --color-border: hsl(var(--border));
   --color-border-subtle: hsl(var(--border-subtle));
   --color-text-primary: hsl(var(--text-primary));

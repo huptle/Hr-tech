@@ -11,7 +11,14 @@ export const runtime = "nodejs";
 
 function verifyWebhook(req: NextRequest): boolean {
   const secret = process.env.VAPI_WEBHOOK_SECRET?.trim();
-  if (!secret) return true;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[vapi-webhook] VAPI_WEBHOOK_SECRET is not set — rejecting request in production.");
+      return false;
+    }
+    // Allow in development for testing convenience
+    return true;
+  }
   const header =
     req.headers.get("x-vapi-secret") ||
     req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");

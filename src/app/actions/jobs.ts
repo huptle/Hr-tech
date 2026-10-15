@@ -111,12 +111,12 @@ export async function deleteJob(jobId: string) {
     where: { id: jobId, ...jobWhereOwned(scope) },
     select: { title: true },
   });
-  await prisma.job.delete({ where: { id: jobId } });
   await logActivity({
     tag: "job",
     what: `Deleted job: ${job?.title ?? jobId}.`,
     actorId: user.id,
   });
+  await prisma.job.delete({ where: { id: jobId } });
   revalidatePath("/jobs");
   revalidatePath("/");
   redirect("/jobs");
