@@ -50,6 +50,9 @@ services:
       HR_PORTAL_INTERNAL_URL: http://app:3000
     ports:
       - "${APP_BIND:-0.0.0.0}:${APPLY_PORT:-3002}:3000"
+    volumes:
+      - hr-apply-resumes:/app/uploads/resumes
+      - hr-apply-data:/app/data
     networks:
       - hrnet
 
@@ -69,6 +72,9 @@ services:
       HR_PORTAL_INTERNAL_URL: http://app-build:3000
     ports:
       - "${APPLY_PORT:-3002}:3000"
+    volumes:
+      - hr-apply-resumes:/app/uploads/resumes
+      - hr-apply-data:/app/data
     networks:
       - hrnet
 
@@ -98,3 +104,5 @@ networks:
 
 volumes:
   hr-postgres-data:
+  hr-apply-resumes:
+  hr-apply-data:

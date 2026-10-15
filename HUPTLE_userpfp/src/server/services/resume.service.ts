@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { saveResume } from "@/lib/storage";
 import { ResumeDataSchema, type ResumeData } from "./resume.types";
 import { createProfile } from "./profile.service";
 import { syncCandidateToHrPortal } from "./hr-sync.service";
@@ -57,21 +57,7 @@ export async function parseAndUploadResume(
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const { error: uploadError } = await supabase.storage
-    .from("resumes")
-    .upload(fileName, arrayBuffer, {
-      contentType: file.type || "application/pdf",
-      upsert: false,
-    });
-
-  if (uploadError) {
-    throw new Error(
-      `Storage upload failed: ${uploadError.message}. Make sure the 'resumes' bucket exists.`,
-    );
-  }
-
-  const { data: publicUrlData } = supabase.storage.from("resumes").getPublicUrl(fileName);
-  const resumeUrl = publicUrlData.publicUrl;
+  const resumeUrl = await saveResume(fileName, buffer);
 
   let rawText = "";
   let pageCount = 0;
