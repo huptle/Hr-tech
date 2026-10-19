@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { parseAndUploadResume } from "@/server/services/resume.service";
 import { fetchJobRecommendations } from "@/server/services/hr-portal.service";
 import { createProfile } from "@/server/services/profile.service";
+import { generateCandidateToken } from "@/lib/candidate-auth";
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
@@ -32,8 +35,12 @@ export async function POST(req: Request) {
     });
 
     const row = profile?.[0];
+    const normalizedEmail = email.trim().toLowerCase();
+    const token = generateCandidateToken(normalizedEmail);
+    const isSecure = process.env.NODE_ENV === "production" || req.headers.get("x-forwarded-proto") === "https";
+    const maxAge = 30 * 24 * 60 * 60; // 30 days
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         parsed_data: parsedData,
@@ -42,6 +49,24 @@ export async function POST(req: Request) {
         profileId: row?.id,
       },
     });
+
+    response.cookies.set("huptle_candidate_session", token, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: "lax",
+      path: "/",
+      maxAge,
+    });
+
+    response.cookies.set("huptle_apply_session_email", normalizedEmail, {
+      httpOnly: false,
+      secure: isSecure,
+      sameSite: "lax",
+      path: "/",
+      maxAge,
+    });
+
+    return response;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Match failed";
     return NextResponse.json({ success: false, message }, { status: 500 });
