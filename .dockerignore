@@ -20,3 +20,10 @@ Dockerfile
 .dockerignore
 .gitignore
 tsconfig.tsbuildinfo
+HUPTLE_userpfp
+tests
+docs
+data
+uploads
+*.pptx
+*.pdf

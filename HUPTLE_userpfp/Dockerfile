@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # Candidate apply portal — build from repo root:
 #   docker build -f HUPTLE_userpfp/Dockerfile -t huptle-apply:local HUPTLE_userpfp
 
@@ -5,7 +6,8 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 FROM node:22-alpine AS builder
 WORKDIR /app
@@ -13,7 +15,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV GEMINI_API_KEY=build-placeholder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
