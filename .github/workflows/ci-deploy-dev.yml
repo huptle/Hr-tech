@@ -43,31 +43,21 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Run automated test suite
+        run: npm test
+
       - name: Build
         env:
           DATABASE_URL: postgresql://build:build@build:5432/build?schema=public
           AUTH_SECRET: build-time-placeholder-secret-not-used-at-runtime
         run: npm run build
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build container (verify Dockerfile)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: false
-          tags: portal:ci-dev
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  build-and-push:
+  build-hr:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     outputs:
       docker_image: ${{ steps.meta.outputs.docker_image }}
-      apply_docker_image: ${{ steps.meta.outputs.apply_docker_image }}
     steps:
       - uses: actions/checkout@v4
 
@@ -77,8 +67,6 @@ jobs:
           lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "docker_image=ghcr.io/${lower}:dev-${{ github.sha }}" >> "$GITHUB_OUTPUT"
           echo "docker_image_dev=ghcr.io/${lower}:dev" >> "$GITHUB_OUTPUT"
-          echo "apply_docker_image=ghcr.io/${lower}:apply-dev-${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo "apply_docker_image_dev=ghcr.io/${lower}:apply-dev" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -101,6 +89,32 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  build-apply:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    outputs:
+      apply_docker_image: ${{ steps.meta.outputs.apply_docker_image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image ref (dev tags)
+        id: meta
+        run: |
+          lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "apply_docker_image=ghcr.io/${lower}:apply-dev-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "apply_docker_image_dev=ghcr.io/${lower}:apply-dev" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push candidate apply portal (dev)
         uses: docker/build-push-action@v6
         with:
@@ -114,7 +128,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy-dev:
-    needs: build-and-push
+    needs: [build-hr, build-apply]
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
@@ -133,8 +147,8 @@ jobs:
         uses: appleboy/ssh-action@v1.2.5
         env:
           VPS_APP_PATH: ${{ secrets.VPS_APP_PATH_DEV }}
-          DOCKER_IMAGE: ${{ needs.build-and-push.outputs.docker_image }}
-          APPLY_DOCKER_IMAGE: ${{ needs.build-and-push.outputs.apply_docker_image }}
+          DOCKER_IMAGE: ${{ needs.build-hr.outputs.docker_image }}
+          APPLY_DOCKER_IMAGE: ${{ needs.build-apply.outputs.apply_docker_image }}
           GHCR_USER: ${{ secrets.GHCR_USER }}
           GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
         with:
@@ -186,3 +200,38 @@ jobs:
 
             docker compose up -d --no-build
             docker image prune -f >/dev/null 2>&1 || true
+
+            echo "Waiting for services to initialize..."
+            sleep 10
+
+            echo "Running automated post-deploy smoke tests..."
+            APP_PORT=$(grep '^APP_PORT=' .env | cut -d= -f2 || echo "3001")
+            APPLY_PORT=$(grep '^APPLY_PORT=' .env | cut -d= -f2 || echo "3003")
+            APP_PORT=${APP_PORT:-3001}
+            APPLY_PORT=${APPLY_PORT:-3003}
+
+            # 1. HR App Signin Check
+            HR_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${APP_PORT}/signin" || echo "000")
+            echo "HR Portal signin check (${APP_PORT}): HTTP $HR_STATUS"
+            if [ "$HR_STATUS" != "200" ]; then
+              echo "FATAL: HR Portal failed health check on port ${APP_PORT} (HTTP $HR_STATUS)" >&2
+              exit 1
+            fi
+
+            # 2. Apply Portal Account Page Check
+            APPLY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${APPLY_PORT}/account" || echo "000")
+            echo "Apply Portal account check (${APPLY_PORT}): HTTP $APPLY_STATUS"
+            if [ "$APPLY_STATUS" != "200" ]; then
+              echo "FATAL: Apply Portal failed health check on port ${APPLY_PORT} (HTTP $APPLY_STATUS)" >&2
+              exit 1
+            fi
+
+            # 3. Security Check: Unauthenticated Profile Access Must Be 401
+            SEC_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${APPLY_PORT}/api/profile?email=probe@test.com" || echo "000")
+            echo "Candidate profile authorization check: HTTP $SEC_STATUS"
+            if [ "$SEC_STATUS" != "401" ]; then
+              echo "FATAL: Profile security check failed: expected 401, got $SEC_STATUS" >&2
+              exit 1
+            fi
+
+            echo "All post-deployment smoke tests passed successfully!"
