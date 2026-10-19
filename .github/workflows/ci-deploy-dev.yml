@@ -43,6 +43,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Run automated test suite
+        run: npm test
+
       - name: Build
         env:
           DATABASE_URL: postgresql://build:build@build:5432/build?schema=public
@@ -186,3 +189,38 @@ jobs:
 
             docker compose up -d --no-build
             docker image prune -f >/dev/null 2>&1 || true
+
+            echo "Waiting for services to initialize..."
+            sleep 10
+
+            echo "Running automated post-deploy smoke tests..."
+            APP_PORT=$(grep '^APP_PORT=' .env | cut -d= -f2 || echo "3001")
+            APPLY_PORT=$(grep '^APPLY_PORT=' .env | cut -d= -f2 || echo "3003")
+            APP_PORT=${APP_PORT:-3001}
+            APPLY_PORT=${APPLY_PORT:-3003}
+
+            # 1. HR App Signin Check
+            HR_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${APP_PORT}/signin" || echo "000")
+            echo "HR Portal signin check (${APP_PORT}): HTTP $HR_STATUS"
+            if [ "$HR_STATUS" != "200" ]; then
+              echo "FATAL: HR Portal failed health check on port ${APP_PORT} (HTTP $HR_STATUS)" >&2
+              exit 1
+            fi
+
+            # 2. Apply Portal Account Page Check
+            APPLY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${APPLY_PORT}/account" || echo "000")
+            echo "Apply Portal account check (${APPLY_PORT}): HTTP $APPLY_STATUS"
+            if [ "$APPLY_STATUS" != "200" ]; then
+              echo "FATAL: Apply Portal failed health check on port ${APPLY_PORT} (HTTP $APPLY_STATUS)" >&2
+              exit 1
+            fi
+
+            # 3. Security Check: Unauthenticated Profile Access Must Be 401
+            SEC_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${APPLY_PORT}/api/profile?email=probe@test.com" || echo "000")
+            echo "Candidate profile authorization check: HTTP $SEC_STATUS"
+            if [ "$SEC_STATUS" != "401" ]; then
+              echo "FATAL: Profile security check failed: expected 401, got $SEC_STATUS" >&2
+              exit 1
+            fi
+
+            echo "All post-deployment smoke tests passed successfully!"
