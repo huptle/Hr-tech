@@ -167,6 +167,10 @@ export async function verifyCandidateOtp(
     return { success: false, message: "Too many incorrect attempts. Please request a fresh code." };
   }
 
+  if (record.hashedOtp === "CONSUMED") {
+    return { success: false, message: "This verification code has already been used. Please request a new one." };
+  }
+
   // Verify hash
   const candidateHash = hashOtp(normalizedEmail, submittedOtp.trim());
   if (candidateHash !== record.hashedOtp) {
@@ -179,9 +183,11 @@ export async function verifyCandidateOtp(
     };
   }
 
-  // Success: consume OTP so it cannot be reused
+  // Success: mark OTP as consumed so it cannot be reused, while preserving rate-limit cooldown
+  record.hashedOtp = "CONSUMED";
+  record.expiresAt = 0;
   try {
-    await fs.unlink(filePath);
+    await fs.writeFile(filePath, JSON.stringify(record, null, 2), "utf-8");
   } catch {}
 
   return { success: true, message: "Verification successful." };

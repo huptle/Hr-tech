@@ -64,16 +64,24 @@ export async function GET(req: Request) {
     }
 
     const targetEmail = queryEmail || authenticatedEmail;
-    const data = await getProfileByEmail(targetEmail);
+    try {
+      const data = await getProfileByEmail(targetEmail);
 
-    if (!data) {
-      return NextResponse.json(
-        { success: false, message: "No profile found for this candidate." },
-        { status: 404 }
-      );
+      if (!data) {
+        return NextResponse.json(
+          { success: false, message: "No profile found for this candidate." },
+          { status: 404 }
+        );
+      }
+      
+      return NextResponse.json({ success: true, data }, { status: 200 });
+    } catch (err: unknown) {
+      const msg = errorMessage(err, "Failed to fetch profile");
+      if (msg.toLowerCase().includes("not found")) {
+        return NextResponse.json({ success: false, message: msg }, { status: 404 });
+      }
+      throw err;
     }
-    
-    return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: unknown) {
     console.error("Get profile error:", error);
     return NextResponse.json(
