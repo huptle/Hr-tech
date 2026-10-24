@@ -23,9 +23,9 @@ export default async function AdminBrokersPage() {
 
   return (
     <AdminBrokersView
-      brokers={brokers as any}
-      jobs={jobs as any}
-      commissions={commissions as any}
+      brokers={brokers}
+      jobs={jobs}
+      commissions={commissions}
     />
   );
 }

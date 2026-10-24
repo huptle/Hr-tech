@@ -1,55 +1,33 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { submitCandidateToJob, postBrokerJob } from "@/app/actions/broker";
+import {
+  submitCandidateToJob,
+  postBrokerJob,
+  type EligibleJobItem,
+  type BrokerCandidateItem,
+} from "@/app/actions/broker";
 import {
   Briefcase,
   Search,
-  Filter,
   Plus,
   Send,
-  Building,
   MapPin,
-  Coins,
-  CheckCircle,
   X,
-  Users,
-  ShieldAlert,
 } from "lucide-react";
-
-type JobItem = {
-  id: string;
-  title: string;
-  description: string;
-  dept: string;
-  location: string;
-  mode: string;
-  commissionType: string;
-  commissionAmount: number;
-  createdAt: Date;
-  _count: { candidates: number };
-};
-
-type CandidateItem = {
-  id: string;
-  name: string;
-  email: string;
-  skills: string;
-  experienceYears: number;
-};
 
 export function BrokerJobsView({
   jobs,
   candidates,
 }: {
-  jobs: JobItem[];
-  candidates: CandidateItem[];
+  jobs: EligibleJobItem[];
+  candidates: BrokerCandidateItem[];
 }) {
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
   const [modeFilter, setModeFilter] = useState("all");
 
-  const [showSubmitModal, setShowSubmitModal] = useState<JobItem | null>(null);
+  const [showSubmitModal, setShowSubmitModal] = useState<EligibleJobItem | null>(null);
   const [showPostJobModal, setShowPostJobModal] = useState(false);
 
   // Submit Candidate Form
@@ -101,8 +79,9 @@ export function BrokerJobsView({
           setSuccessMsg("");
           setSelectedCandId("");
         }, 1500);
-      } catch (err: any) {
-        setErrorMsg(err.message || "Failed to submit candidate.");
+      } catch (err: unknown) {
+        const error = err as Error;
+        setErrorMsg(error.message || "Failed to submit candidate.");
       }
     });
   };
@@ -130,8 +109,9 @@ export function BrokerJobsView({
           setJobTitle("");
           setJobDesc("");
         }, 1500);
-      } catch (err: any) {
-        setErrorMsg(err.message || "Could not post job opening.");
+      } catch (err: unknown) {
+        const error = err as Error;
+        setErrorMsg(error.message || "Could not post job opening.");
       }
     });
   };
@@ -267,7 +247,7 @@ export function BrokerJobsView({
           <div className="bg-surface border border-border rounded-3xl p-6 max-w-lg w-full flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-black text-text-primary">Submit to "{showSubmitModal.title}"</h2>
+                <h2 className="text-lg font-black text-text-primary">Submit to &ldquo;{showSubmitModal.title}&rdquo;</h2>
                 <p className="text-xs text-text-muted">
                   Commission: <span className="font-bold text-emerald-500">₹{showSubmitModal.commissionAmount.toLocaleString()}</span> on verified placement
                 </p>

@@ -11,8 +11,6 @@ import {
   Coins,
   ArrowUpRight,
   Plus,
-  ShieldCheck,
-  AlertCircle,
   Clock,
   CheckCircle2,
 } from "lucide-react";

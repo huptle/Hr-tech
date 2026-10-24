@@ -12,5 +12,5 @@ export default async function BrokerApplicationsPage() {
   }
 
   const applications = await getBrokerApplications();
-  return <BrokerApplicationsView applications={applications as any} />;
+  return <BrokerApplicationsView applications={applications} />;
 }

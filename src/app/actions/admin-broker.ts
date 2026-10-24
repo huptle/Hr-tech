@@ -186,7 +186,7 @@ export async function reverseCommission(commissionId: string, reason: string) {
 }
 
 export async function updateJobCommissionConfig(jobId: string, commissionType: string, commissionAmount: number) {
-  const admin = await requireAdmin();
+  await requireAdmin();
 
   const job = await prisma.job.update({
     where: { id: jobId },
@@ -201,3 +201,8 @@ export async function updateJobCommissionConfig(jobId: string, commissionType: s
   revalidatePath("/broker/jobs");
   return job;
 }
+
+export type AdminBrokerItem = Awaited<ReturnType<typeof getAdminBrokerList>>[number];
+export type AdminBrokerJobItem = Awaited<ReturnType<typeof getAdminBrokerJobs>>[number];
+export type AdminCommissionItem = Awaited<ReturnType<typeof getAdminCommissions>>[number];
+

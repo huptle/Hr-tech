@@ -4,51 +4,9 @@ import { useState } from "react";
 import {
   FileText,
   Search,
-  Filter,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
   ChevronRight,
-  Sparkles,
-  Coins,
-  ShieldCheck,
-  UserCheck,
 } from "lucide-react";
-
-type ApplicationItem = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  location: string;
-  journey: string;
-  status: string;
-  createdAt: Date;
-  job: {
-    id: string;
-    title: string;
-    dept: string;
-    location: string;
-  };
-  commissions: Array<{
-    id: string;
-    amount: number;
-    status: string;
-    transactionRef: string;
-  }>;
-};
-
-const STAGES = [
-  "Applied",
-  "Shortlisted",
-  "Round 1",
-  "Interview",
-  "Selected",
-  "Offer Sent",
-  "Offer Accepted",
-  "Joined",
-  "Placement Confirmed",
-];
+import { type BrokerApplicationItem } from "@/app/actions/broker";
 
 function getStageStep(journey: string): number {
   if (journey === "Placement Confirmed" || journey === "Joined") return 5;
@@ -62,7 +20,7 @@ function getStageStep(journey: string): number {
 export function BrokerApplicationsView({
   applications,
 }: {
-  applications: ApplicationItem[];
+  applications: BrokerApplicationItem[];
 }) {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");

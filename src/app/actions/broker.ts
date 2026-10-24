@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { requireUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import { geminiGenerateJson, isGeminiConfigured } from "@/lib/gemini";
@@ -205,8 +206,21 @@ export async function parseResumeWithAI(resumeText: string) {
 Resume Text:
 ${resumeText.slice(0, 6000)}`;
 
+export interface ParsedResumeData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  skills?: string[];
+  experienceYears?: number;
+  currentRole?: string;
+  currentCompany?: string;
+  expectedSalary?: string;
+  summary?: string;
+}
+
   try {
-    const parsed = await geminiGenerateJson<any>(prompt);
+    const parsed = await geminiGenerateJson<ParsedResumeData>(prompt);
     return parsed;
   } catch {
     return {
@@ -226,7 +240,7 @@ export async function getEligibleJobs(filters?: {
   location?: string;
   mode?: string;
 }) {
-  const where: any = {
+  const where: Prisma.JobWhereInput = {
     status: "Live",
     isBrokerEligible: true,
     approvalStatus: "approved",
@@ -440,3 +454,9 @@ export async function updateBrokerPayoutDetails(formData: FormData) {
   revalidatePath("/broker/commissions");
   return { success: true };
 }
+
+export type BrokerCandidateItem = Awaited<ReturnType<typeof getBrokerCandidates>>[number];
+export type EligibleJobItem = Awaited<ReturnType<typeof getEligibleJobs>>[number];
+export type BrokerApplicationItem = Awaited<ReturnType<typeof getBrokerApplications>>[number];
+export type BrokerCommissionItem = Awaited<ReturnType<typeof getBrokerCommissions>>[number];
+

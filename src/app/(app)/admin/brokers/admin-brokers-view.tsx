@@ -7,107 +7,27 @@ import {
   approveCommission,
   markCommissionPaid,
   reverseCommission,
-  updateJobCommissionConfig,
+  type AdminBrokerItem,
+  type AdminBrokerJobItem,
+  type AdminCommissionItem,
 } from "@/app/actions/admin-broker";
 import {
   Handshake,
-  CheckCircle,
-  XCircle,
-  Clock,
   Briefcase,
   Coins,
-  Search,
-  ShieldCheck,
-  UserCheck,
-  AlertCircle,
-  Check,
-  RotateCcw,
 } from "lucide-react";
-
-type BrokerItem = {
-  id: string;
-  brokerCode: string;
-  agencyName: string;
-  status: string;
-  commissionRate: number;
-  payoutDetails: string;
-  phone: string;
-  createdAt: Date;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    createdAt: Date;
-  };
-  _count: {
-    candidates: number;
-    applications: number;
-    commissions: number;
-    jobsPosted: number;
-  };
-};
-
-type JobItem = {
-  id: string;
-  title: string;
-  dept: string;
-  location: string;
-  mode: string;
-  commissionAmount: number;
-  approvalStatus: string;
-  brokerPoster: {
-    id: string;
-    agencyName: string;
-    brokerCode: string;
-  } | null;
-  createdBy: {
-    name: string;
-    email: string;
-  } | null;
-  createdAt: Date;
-};
-
-type CommissionItem = {
-  id: string;
-  amount: number;
-  status: string;
-  transactionRef: string;
-  createdAt: Date;
-  joiningDate: Date | null;
-  notes: string;
-  broker: {
-    id: string;
-    agencyName: string;
-    brokerCode: string;
-    payoutDetails: string;
-    phone: string;
-  };
-  candidate: {
-    id: string;
-    name: string;
-    email: string;
-    journey: string;
-  };
-  job: {
-    id: string;
-    title: string;
-    dept: string;
-  };
-};
 
 export function AdminBrokersView({
   brokers,
   jobs,
   commissions,
 }: {
-  brokers: BrokerItem[];
-  jobs: JobItem[];
-  commissions: CommissionItem[];
+  brokers: AdminBrokerItem[];
+  jobs: AdminBrokerJobItem[];
+  commissions: AdminCommissionItem[];
 }) {
   const [activeTab, setActiveTab] = useState<"brokers" | "jobs" | "commissions">("brokers");
-  const [search, setSearch] = useState("");
   const [payoutInput, setPayoutInput] = useState<{ [key: string]: string }>({});
-  const [reverseReason, setReverseReason] = useState<{ [key: string]: string }>({});
   const [actionMsg, setActionMsg] = useState("");
 
   const [isPending, startTransition] = useTransition();
@@ -118,8 +38,9 @@ export function AdminBrokersView({
         await updateBrokerStatus(brokerId, status);
         setActionMsg(`Broker status updated to ${status}.`);
         setTimeout(() => setActionMsg(""), 2500);
-      } catch (e: any) {
-        alert(e.message || "Failed to update broker status.");
+      } catch (e: unknown) {
+        const err = e as Error;
+        alert(err.message || "Failed to update broker status.");
       }
     });
   };
@@ -130,8 +51,9 @@ export function AdminBrokersView({
         await updateJobApproval(jobId, approvalStatus);
         setActionMsg(`Job opening ${approvalStatus}.`);
         setTimeout(() => setActionMsg(""), 2500);
-      } catch (e: any) {
-        alert(e.message || "Failed to update job approval.");
+      } catch (e: unknown) {
+        const err = e as Error;
+        alert(err.message || "Failed to update job approval.");
       }
     });
   };
@@ -142,8 +64,9 @@ export function AdminBrokersView({
         await approveCommission(commissionId);
         setActionMsg("Commission approved! Ready for payout disbursement.");
         setTimeout(() => setActionMsg(""), 2500);
-      } catch (e: any) {
-        alert(e.message || "Failed to approve commission.");
+      } catch (e: unknown) {
+        const err = e as Error;
+        alert(err.message || "Failed to approve commission.");
       }
     });
   };
@@ -159,21 +82,23 @@ export function AdminBrokersView({
         await markCommissionPaid(commissionId, ref);
         setActionMsg("Commission marked as Paid.");
         setTimeout(() => setActionMsg(""), 2500);
-      } catch (e: any) {
-        alert(e.message || "Failed to mark commission paid.");
+      } catch (e: unknown) {
+        const err = e as Error;
+        alert(err.message || "Failed to mark commission paid.");
       }
     });
   };
 
   const handleReverse = (commissionId: string) => {
-    const reason = reverseReason[commissionId] || "Candidate probationary exit";
+    const promptReason = prompt("Reason for reversing or rejecting commission:") || "Candidate probationary exit";
     startTransition(async () => {
       try {
-        await reverseCommission(commissionId, reason);
+        await reverseCommission(commissionId, promptReason);
         setActionMsg("Commission reversed.");
         setTimeout(() => setActionMsg(""), 2500);
-      } catch (e: any) {
-        alert(e.message || "Failed to reverse commission.");
+      } catch (e: unknown) {
+        const err = e as Error;
+        alert(err.message || "Failed to reverse commission.");
       }
     });
   };

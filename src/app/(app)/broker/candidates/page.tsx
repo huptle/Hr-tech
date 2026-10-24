@@ -16,5 +16,6 @@ export default async function BrokerCandidatesPage() {
     getEligibleJobs(),
   ]);
 
-  return <BrokerCandidatesView candidates={candidates as any} jobs={jobs as any} />;
+  return <BrokerCandidatesView candidates={candidates} jobs={jobs} />;
 }
+

@@ -5,6 +5,8 @@ import {
   addBrokerCandidate,
   submitCandidateToJob,
   parseResumeWithAI,
+  type BrokerCandidateItem,
+  type EligibleJobItem,
 } from "@/app/actions/broker";
 import {
   Users,
@@ -13,53 +15,19 @@ import {
   Sparkles,
   Send,
   CheckCircle,
-  FileText,
-  Briefcase,
-  AlertCircle,
   X,
-  Building,
-  MapPin,
-  Clock,
 } from "lucide-react";
-
-type CandidateItem = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  location: string;
-  skills: string;
-  experienceYears: number;
-  expectedSalary: string;
-  currentCompany: string;
-  notes: string;
-  consentGiven: boolean;
-  createdAt: Date;
-  applications: Array<{
-    id: string;
-    job: { id: string; title: string; dept: string; location: string };
-  }>;
-};
-
-type JobItem = {
-  id: string;
-  title: string;
-  dept: string;
-  location: string;
-  commissionAmount: number;
-  commissionType: string;
-};
 
 export function BrokerCandidatesView({
   candidates,
   jobs,
 }: {
-  candidates: CandidateItem[];
-  jobs: JobItem[];
+  candidates: BrokerCandidateItem[];
+  jobs: EligibleJobItem[];
 }) {
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showSubmitModal, setShowSubmitModal] = useState<CandidateItem | null>(null);
+  const [showSubmitModal, setShowSubmitModal] = useState<BrokerCandidateItem | null>(null);
 
   // Add Candidate Form State
   const [name, setName] = useState("");
@@ -111,8 +79,9 @@ export function BrokerCandidatesView({
         if (parsed.currentCompany) setCurrentCompany(parsed.currentCompany);
         if (parsed.summary) setNotes(parsed.summary);
       }
-    } catch (e: any) {
-      setSubmitError(e.message || "Failed to parse resume.");
+    } catch (e: unknown) {
+      const err = e as Error;
+      setSubmitError(err.message || "Failed to parse resume.");
     } finally {
       setParsing(false);
     }
@@ -148,8 +117,9 @@ export function BrokerCandidatesView({
         setCurrentCompany("");
         setNotes("");
         setResumeText("");
-      } catch (err: any) {
-        setSubmitError(err.message || "Could not add candidate.");
+      } catch (err: unknown) {
+        const error = err as Error;
+        setSubmitError(error.message || "Could not add candidate.");
       }
     });
   };
@@ -173,8 +143,9 @@ export function BrokerCandidatesView({
           setSubmitSuccess("");
           setSelectedJobId("");
         }, 1500);
-      } catch (err: any) {
-        setSubmitError(err.message || "Failed to submit candidate.");
+      } catch (err: unknown) {
+        const error = err as Error;
+        setSubmitError(error.message || "Failed to submit candidate.");
       }
     });
   };
@@ -263,7 +234,7 @@ export function BrokerCandidatesView({
 
                 {c.notes && (
                   <p className="text-xs text-text-muted mt-3 line-clamp-2 italic">
-                    "{c.notes}"
+                    &ldquo;{c.notes}&rdquo;
                   </p>
                 )}
               </div>

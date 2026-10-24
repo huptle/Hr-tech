@@ -18,7 +18,7 @@ export default async function BrokerCommissionsPage() {
 
   return (
     <BrokerCommissionsView
-      commissions={commissions as any}
+      commissions={commissions}
       brokerCode={stats.brokerCode}
       agencyName={stats.agencyName}
       payoutDetails={user.brokerProfile?.payoutDetails || ""}

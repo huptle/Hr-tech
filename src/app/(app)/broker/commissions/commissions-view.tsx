@@ -1,43 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateBrokerPayoutDetails } from "@/app/actions/broker";
+import {
+  updateBrokerPayoutDetails,
+  type BrokerCommissionItem,
+} from "@/app/actions/broker";
 import {
   Coins,
   CheckCircle2,
   Clock,
   AlertCircle,
-  Building2,
-  CreditCard,
-  QrCode,
-  ShieldCheck,
-  FileCheck,
 } from "lucide-react";
-
-type CommissionItem = {
-  id: string;
-  amount: number;
-  rate: number;
-  type: string;
-  status: string;
-  joiningDate: Date | null;
-  verifiedAt: Date | null;
-  paidAt: Date | null;
-  transactionRef: string;
-  notes: string;
-  createdAt: Date;
-  candidate: {
-    id: string;
-    name: string;
-    email: string;
-    journey: string;
-  };
-  job: {
-    id: string;
-    title: string;
-    dept: string;
-  };
-};
 
 export function BrokerCommissionsView({
   commissions,
@@ -46,7 +19,7 @@ export function BrokerCommissionsView({
   payoutDetails,
   phone,
 }: {
-  commissions: CommissionItem[];
+  commissions: BrokerCommissionItem[];
   brokerCode: string;
   agencyName: string;
   payoutDetails: string;
