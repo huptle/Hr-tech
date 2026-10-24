@@ -98,6 +98,16 @@ export async function readSession(): Promise<SessionPayload | null> {
   return verifySessionToken(token);
 }
 
+export type BrokerProfileInfo = {
+  id: string;
+  brokerCode: string;
+  agencyName: string;
+  status: string;
+  commissionRate: number;
+  payoutDetails: string;
+  phone: string;
+};
+
 export type CurrentUser = {
   id: string;
   name: string;
@@ -109,6 +119,8 @@ export type CurrentUser = {
   initials: string;
   isAdmin: boolean;
   googleConnected: boolean;
+  isBroker: boolean;
+  brokerProfile?: BrokerProfileInfo | null;
 };
 
 function initialsFor(name: string): string {
@@ -123,8 +135,14 @@ function initialsFor(name: string): string {
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await readSession();
   if (!session) return null;
-  const user = await prisma.hrUser.findUnique({ where: { id: session.uid } });
+  const user = await prisma.hrUser.findUnique({
+    where: { id: session.uid },
+    include: { brokerProfile: true },
+  });
   if (!user) return null;
+
+  const isBroker = user.role.toLowerCase() === "broker";
+
   return {
     id: user.id,
     name: user.name,
@@ -136,6 +154,18 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     initials: initialsFor(user.name),
     isAdmin: user.isAdmin,
     googleConnected: Boolean(user.googleRefreshToken || user.googleAccessToken),
+    isBroker,
+    brokerProfile: user.brokerProfile
+      ? {
+          id: user.brokerProfile.id,
+          brokerCode: user.brokerProfile.brokerCode,
+          agencyName: user.brokerProfile.agencyName,
+          status: user.brokerProfile.status,
+          commissionRate: user.brokerProfile.commissionRate,
+          payoutDetails: user.brokerProfile.payoutDetails,
+          phone: user.brokerProfile.phone,
+        }
+      : null,
   };
 }
 

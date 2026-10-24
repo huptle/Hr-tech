@@ -15,7 +15,10 @@ import {
   Settings,
   Sparkles,
   Menu,
-  ChevronLeft
+  ChevronLeft,
+  Handshake,
+  Coins,
+  ShieldCheck,
 } from 'lucide-react';
 import { signOut } from '@/app/actions/auth';
 import { ThemeToggle } from './theme-toggle';
@@ -27,6 +30,14 @@ type CurrentUser = {
   name: string;
   role: string;
   initials: string;
+  isAdmin?: boolean;
+  isBroker?: boolean;
+  brokerProfile?: {
+    id: string;
+    brokerCode: string;
+    agencyName: string;
+    status: string;
+  } | null;
 };
 
 function SideNavItem({
@@ -87,7 +98,7 @@ function SideNavItem({
 }
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === '/') return pathname === '/';
+  if (href === '/' || href === '/broker') return pathname === href;
   return pathname === href || pathname.startsWith(href + '/');
 }
 
@@ -103,6 +114,12 @@ export function Shell({
 
   const breadcrumb =
     pathname === '/' ? 'Analytics' :
+    pathname.startsWith('/broker/candidates') ? 'Placement / Talent Pool' :
+    pathname.startsWith('/broker/jobs') ? 'Placement / Jobs' :
+    pathname.startsWith('/broker/applications') ? 'Placement / Applications' :
+    pathname.startsWith('/broker/commissions') ? 'Placement / Commissions' :
+    pathname.startsWith('/broker') ? 'Placement / Dashboard' :
+    pathname.startsWith('/admin/brokers') ? 'Admin / Placement Partners' :
     pathname.startsWith('/jobs') ? 'Jobs' :
     pathname.startsWith('/schedule') ? 'Interviews / Schedule' :
     pathname.startsWith('/shortlist') ? 'Interviews / Pipeline' :
@@ -130,25 +147,57 @@ export function Shell({
                 </button>
               </div>
 
-              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted px-3 mb-3 opacity-50">Main Menu</div>
-              <SideNavItem icon={Home} label="Analytics" href="/" active={isActive(pathname, '/')} />
-              <SideNavItem icon={Briefcase} label="Jobs" href="/jobs" active={isActive(pathname, '/jobs')} />
-              <SideNavItem icon={Users} label="Pipeline" href="/shortlist" active={isActive(pathname, '/shortlist')} />
-              <SideNavItem icon={Calendar} label="Schedule" href="/schedule" active={isActive(pathname, '/schedule')} />
-              <SideNavItem icon={Mail} label="Templates" href="/templates" active={isActive(pathname, '/templates')} />
-              <SideNavItem icon={FileText} label="Reports" href="/reports" active={isActive(pathname, '/reports')} />
+              {user.isBroker ? (
+                <>
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted px-3 mb-3 opacity-50">Partner Portal</div>
+                  <SideNavItem icon={Home} label="Dashboard" href="/broker" active={isActive(pathname, '/broker')} />
+                  <SideNavItem icon={Users} label="Talent Pool" href="/broker/candidates" active={isActive(pathname, '/broker/candidates')} />
+                  <SideNavItem icon={Briefcase} label="Browse Jobs" href="/broker/jobs" active={isActive(pathname, '/broker/jobs')} />
+                  <SideNavItem icon={FileText} label="Applications" href="/broker/applications" active={isActive(pathname, '/broker/applications')} />
+                  <SideNavItem icon={Coins} label="Commissions" href="/broker/commissions" active={isActive(pathname, '/broker/commissions')} />
+                </>
+              ) : (
+                <>
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted px-3 mb-3 opacity-50">Main Menu</div>
+                  <SideNavItem icon={Home} label="Analytics" href="/" active={isActive(pathname, '/')} />
+                  <SideNavItem icon={Briefcase} label="Jobs" href="/jobs" active={isActive(pathname, '/jobs')} />
+                  <SideNavItem icon={Users} label="Pipeline" href="/shortlist" active={isActive(pathname, '/shortlist')} />
+                  <SideNavItem icon={Calendar} label="Schedule" href="/schedule" active={isActive(pathname, '/schedule')} />
+                  <SideNavItem icon={Mail} label="Templates" href="/templates" active={isActive(pathname, '/templates')} />
+                  <SideNavItem icon={FileText} label="Reports" href="/reports" active={isActive(pathname, '/reports')} />
+
+                  {user.isAdmin && (
+                    <>
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted px-3 mt-4 mb-2 opacity-50">Admin Center</div>
+                      <SideNavItem icon={Handshake} label="Placement Partners" href="/admin/brokers" active={isActive(pathname, '/admin/brokers')} badge="Portal" />
+                    </>
+                  )}
+                </>
+              )}
 
               <div className="mt-auto pt-6 flex flex-col gap-1 border-t border-border/50">
-                <div className="mx-1 mb-6 p-4 rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-accent relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 opacity-10 -translate-y-1/4 translate-x-1/4 group-hover:scale-125 transition-transform duration-700">
-                    <Sparkles size={100} />
+                {user.isBroker ? (
+                  <div className="mx-1 mb-4 p-3.5 rounded-2xl bg-surface-2 border border-border relative overflow-hidden">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShieldCheck size={14} className="text-emerald-500" />
+                      <span className="text-[10px] font-black text-text-primary uppercase tracking-wider">Placement Partner</span>
+                    </div>
+                    <div className="text-xs font-black text-accent tracking-wide">{user.brokerProfile?.brokerCode || 'BRK-ACTIVE'}</div>
+                    <div className="text-[10px] text-text-muted font-medium mt-1 truncate">{user.brokerProfile?.agencyName || user.name}</div>
                   </div>
-                  <div className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 relative z-10">Premium</div>
-                  <div className="text-xs font-bold text-white leading-tight relative z-10">Scale faster with Huptle AI Agents</div>
-                  <button className="mt-4 w-full py-2.5 rounded-xl bg-white text-accent text-[11px] font-black flex items-center justify-center gap-2 shadow-xl hover:bg-white/90 transition-all relative z-10">
-                    <Sparkles size={12} /> Get Started
-                  </button>
-                </div>
+                ) : (
+                  <div className="mx-1 mb-6 p-4 rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-accent relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 opacity-10 -translate-y-1/4 translate-x-1/4 group-hover:scale-125 transition-transform duration-700">
+                      <Sparkles size={100} />
+                    </div>
+                    <div className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 relative z-10">Premium</div>
+                    <div className="text-xs font-bold text-white leading-tight relative z-10">Scale faster with Huptle AI Agents</div>
+                    <button className="mt-4 w-full py-2.5 rounded-xl bg-white text-accent text-[11px] font-black flex items-center justify-center gap-2 shadow-xl hover:bg-white/90 transition-all relative z-10">
+                      <Sparkles size={12} /> Get Started
+                    </button>
+                  </div>
+                )}
+
                 <SideNavItem icon={Settings} label="Settings" href="/profile" active={isActive(pathname, '/profile')} />
                 <form action={signOut}>
                   <button
@@ -176,13 +225,15 @@ export function Shell({
           </button>
 
           <div className="flex items-center gap-3 shrink-0">
-            <Link href="/" className="hover:opacity-80 transition-opacity hidden lg:block">
+            <Link href={user.isBroker ? "/broker" : "/"} className="hover:opacity-80 transition-opacity hidden lg:block">
               <HuptleWordmark height={24} className="text-text-primary" />
             </Link>
-            <span className="text-[10px] font-black bg-accent text-white px-1.5 py-0.5 rounded tracking-widest hidden sm:block">AI</span>
+            <span className="text-[10px] font-black bg-accent text-white px-1.5 py-0.5 rounded tracking-widest hidden sm:block">
+              {user.isBroker ? 'PARTNER' : 'AI'}
+            </span>
             <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
             <div className="flex items-center text-xs gap-1 font-medium">
-              <Link href="/" className="text-text-muted hover:text-accent transition-colors">Huptle</Link>
+              <Link href={user.isBroker ? "/broker" : "/"} className="text-text-muted hover:text-accent transition-colors">Huptle</Link>
               <span className="text-text-muted opacity-30">/</span>
               <span className="text-text-primary font-bold truncate max-w-[120px] lg:max-w-[200px]">{breadcrumb}</span>
             </div>
@@ -191,6 +242,12 @@ export function Shell({
           <div className="flex-1" />
 
           <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+            {user.isBroker && user.brokerProfile && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-black">
+                <span>Partner ID:</span>
+                <span className="font-mono">{user.brokerProfile.brokerCode}</span>
+              </div>
+            )}
             <div className="hidden sm:block">
               <ThemeToggle />
             </div>
