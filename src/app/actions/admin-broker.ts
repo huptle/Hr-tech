@@ -41,7 +41,7 @@ export async function updateBrokerStatus(brokerId: string, status: "approved" | 
   });
 
   await logActivity({
-    tag: "admin_broker",
+    tag: "new",
     what: `Admin ${admin.name} updated Broker ${broker.agencyName} (${broker.brokerCode}) status to "${status}".`,
     actorId: admin.id,
   });
@@ -75,7 +75,7 @@ export async function updateJobApproval(jobId: string, approvalStatus: "approved
   });
 
   await logActivity({
-    tag: "job_approval",
+    tag: "job",
     what: `Admin ${admin.name} ${approvalStatus === "approved" ? "approved" : "rejected"} partner job "${job.title}".`,
     actorId: admin.id,
     jobId: job.id,
@@ -118,7 +118,7 @@ export async function approveCommission(commissionId: string, joiningDate?: stri
   });
 
   await logActivity({
-    tag: "commission_approved",
+    tag: "hired",
     what: `Admin ${admin.name} approved placement commission ₹${commission.amount} for ${commission.broker.agencyName} (${commission.candidate.name}).`,
     actorId: admin.id,
   });
@@ -149,7 +149,7 @@ export async function markCommissionPaid(commissionId: string, transactionRef: s
   });
 
   await logActivity({
-    tag: "commission_paid",
+    tag: "hired",
     what: `Admin ${admin.name} recorded payout ₹${commission.amount} (Ref: ${transactionRef}) to ${commission.broker.agencyName}.`,
     actorId: admin.id,
   });
@@ -175,7 +175,7 @@ export async function reverseCommission(commissionId: string, reason: string) {
   });
 
   await logActivity({
-    tag: "commission_reversed",
+    tag: "rejected",
     what: `Admin ${admin.name} reversed commission for ${commission.candidate.name} (${commission.broker.agencyName}): ${reason}.`,
     actorId: admin.id,
   });

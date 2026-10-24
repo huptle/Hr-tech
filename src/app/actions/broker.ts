@@ -352,7 +352,7 @@ export async function submitCandidateToJob(input: {
   });
 
   await logActivity({
-    tag: "broker",
+    tag: "new",
     what: `${profile.agencyName} (${profile.brokerCode}) submitted candidate ${brokerCand.name} for ${job.title}.`,
     actorId: profile.userId,
     candidateId: candidate.id,
@@ -396,7 +396,7 @@ export async function postBrokerJob(formData: FormData) {
   });
 
   await logActivity({
-    tag: "broker_job",
+    tag: "job",
     what: `Partner ${profile.agencyName} (${profile.brokerCode}) posted new opening "${title}" (Pending Admin Approval).`,
     actorId: user.id,
     jobId: job.id,
