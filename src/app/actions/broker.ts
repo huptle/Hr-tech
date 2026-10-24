@@ -173,6 +173,19 @@ export async function addBrokerCandidate(formData: FormData) {
   return candidate;
 }
 
+export interface ParsedResumeData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  skills?: string[];
+  experienceYears?: number;
+  currentRole?: string;
+  currentCompany?: string;
+  expectedSalary?: string;
+  summary?: string;
+}
+
 export async function parseResumeWithAI(resumeText: string) {
   if (!resumeText || resumeText.trim().length < 20) {
     throw new Error("Resume content is too short to parse.");
@@ -205,19 +218,6 @@ export async function parseResumeWithAI(resumeText: string) {
 
 Resume Text:
 ${resumeText.slice(0, 6000)}`;
-
-export interface ParsedResumeData {
-  name?: string;
-  email?: string;
-  phone?: string;
-  location?: string;
-  skills?: string[];
-  experienceYears?: number;
-  currentRole?: string;
-  currentCompany?: string;
-  expectedSalary?: string;
-  summary?: string;
-}
 
   try {
     const parsed = await geminiGenerateJson<ParsedResumeData>(prompt);
