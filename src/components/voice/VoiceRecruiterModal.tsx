@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -16,6 +16,8 @@ import {
   ExternalLink,
   ChevronRight,
   ShieldCheck,
+  AlertCircle,
+  Square,
 } from "lucide-react";
 import { VoiceOrb } from "./VoiceOrb";
 import { LivePersonaCanvas } from "./LivePersonaCanvas";
@@ -27,6 +29,7 @@ import {
 } from "@/lib/voice-persona-types";
 import {
   processVoiceTurn,
+  processAudioVoiceTurn,
   createJobFromPersona,
   searchTalentPoolForPersona,
 } from "@/app/actions/voice-recruiter";
@@ -75,6 +78,7 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 interface IWindow extends Window {
   webkitSpeechRecognition?: SpeechRecognitionConstructor;
   SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitAudioContext?: typeof AudioContext;
 }
 
 type MatchedCandidate = {
@@ -97,6 +101,8 @@ export function VoiceRecruiterModal({ isOpen, onClose }: VoiceRecruiterModalProp
   const [liveTranscript, setLiveTranscript] = useState<string>("");
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
   const [manualText, setManualText] = useState<string>("");
+  const [audioLevel, setAudioLevel] = useState<number>(0.4);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [suggestedReplies, setSuggestedReplies] = useState<string[]>([
     "I need a B2B sales guy",
     "Full-stack engineer chahiye",
@@ -110,9 +116,48 @@ export function VoiceRecruiterModal({ isOpen, onClose }: VoiceRecruiterModalProp
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
-  const handleUserMessageRef = useRef<(text: string) => Promise<void>>(async () => {});
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
-  const handleUserMessage = async (text: string) => {
+  const speakText = useCallback((text: string) => {
+    if (!audioEnabled || typeof window === "undefined" || !synthRef.current) return;
+    synthRef.current.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-IN";
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    const voices = synthRef.current.getVoices();
+    const preferredVoice = voices.find(
+      (v) =>
+        v.lang.includes("en-IN") ||
+        v.name.includes("Google") ||
+        v.name.includes("Natural"),
+    );
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onstart = () => {
+      setVoiceState("speaking");
+    };
+
+    utterance.onend = () => {
+      setVoiceState("idle");
+    };
+
+    utterance.onerror = () => {
+      setVoiceState("idle");
+    };
+
+    synthRef.current.speak(utterance);
+  }, [audioEnabled]);
+
+  const handleUserMessage = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
     const userMsg: ConversationMessage = {
@@ -151,29 +196,246 @@ export function VoiceRecruiterModal({ isOpen, onClose }: VoiceRecruiterModalProp
       console.error("Failed to process turn:", err);
       setVoiceState("idle");
     }
-  };
+  }, [messages, persona, speakText]);
 
-  useEffect(() => {
-    handleUserMessageRef.current = handleUserMessage;
-  });
+  // Clean up audio tracks & speech engines
+  const cleanupAudio = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
+    }
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
+  }, []);
 
-  // Initialize Speech Synthesis & Speech Recognition
   useEffect(() => {
     if (typeof window !== "undefined") {
       synthRef.current = window.speechSynthesis;
+    }
+    return () => {
+      cleanupAudio();
+    };
+  }, [cleanupAudio]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      cleanupAudio();
+      setVoiceState("idle");
+      setLiveTranscript("");
+      setErrorMessage(null);
+    }
+  }, [isOpen, cleanupAudio]);
+
+  const stopListeningAndProcess = useCallback(async () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+
+    const currentFinalText = liveTranscript.trim();
+
+    // 1. If Web Speech gave a valid transcript, process directly
+    if (currentFinalText) {
+      await handleUserMessage(currentFinalText);
+      return;
+    }
+
+    // 2. If Web Speech had no text (e.g. on HTTP or unsupported browser), send recorded audio to Gemini
+    if (audioChunksRef.current.length > 0) {
+      setVoiceState("thinking");
+      try {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: audioChunksRef.current[0].type || "audio/webm",
+        });
+
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const rawResult = reader.result as string;
+          const base64Data = rawResult ? rawResult.split(",")[1] : "";
+          if (!base64Data) {
+            setVoiceState("idle");
+            return;
+          }
+
+          try {
+            const res = await processAudioVoiceTurn(
+              base64Data,
+              audioBlob.type || "audio/webm",
+              messages,
+              persona,
+            );
+
+            const userSpokenText = res.transcribedText || "Spoken Voice Input";
+            const userMsg: ConversationMessage = {
+              role: "user",
+              content: userSpokenText,
+              timestamp: Date.now(),
+            };
+
+            const assistantMsg: ConversationMessage = {
+              role: "assistant",
+              content: res.assistantSpeech,
+              timestamp: Date.now(),
+            };
+
+            setLiveTranscript(userSpokenText);
+            setMessages((prev) => [...prev, userMsg, assistantMsg]);
+            setPersona(res.updatedPersona);
+            if (res.suggestedReplies?.length) {
+              setSuggestedReplies(res.suggestedReplies);
+            }
+            speakText(res.assistantSpeech);
+          } catch (audioErr) {
+            console.error("Audio processing failed:", audioErr);
+            setVoiceState("idle");
+          }
+        };
+      } catch {
+        setVoiceState("idle");
+      }
+      return;
+    }
+
+    setVoiceState("idle");
+  }, [liveTranscript, handleUserMessage, messages, persona, speakText]);
+
+  const startListening = async () => {
+    if (synthRef.current) synthRef.current.cancel();
+    setErrorMessage(null);
+
+    // If currently listening, clicking again stops and processes
+    if (voiceState === "listening") {
+      await stopListeningAndProcess();
+      return;
+    }
+
+    setVoiceState("listening");
+    setLiveTranscript("");
+
+    // Step 1: Capture microphone audio stream
+    try {
+      if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioStreamRef.current = stream;
+
+        // Visualizer with AudioContext
+        try {
+          const win = window as unknown as IWindow;
+          const AudioContextConstructor = win.AudioContext || win.webkitAudioContext;
+          if (AudioContextConstructor) {
+            const ctx = new AudioContextConstructor();
+            audioContextRef.current = ctx;
+            const src = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            src.connect(analyser);
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const checkVolume = () => {
+              if (!audioStreamRef.current) return;
+              analyser.getByteFrequencyData(dataArray);
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+              const avg = sum / dataArray.length;
+              setAudioLevel(Math.min(1, Math.max(0.15, avg / 70)));
+              animationFrameRef.current = requestAnimationFrame(checkVolume);
+            };
+            checkVolume();
+          }
+        } catch {
+          /* ignore analyser errors */
+        }
+
+        // Universal MediaRecorder setup
+        if (typeof MediaRecorder !== "undefined") {
+          audioChunksRef.current = [];
+          const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+            ? "audio/webm;codecs=opus"
+            : MediaRecorder.isTypeSupported("audio/webm")
+              ? "audio/webm"
+              : MediaRecorder.isTypeSupported("audio/mp4")
+                ? "audio/mp4"
+                : "";
+
+          const recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) {
+              audioChunksRef.current.push(e.data);
+            }
+          };
+          recorder.start(250);
+          mediaRecorderRef.current = recorder;
+        }
+      }
+    } catch (micErr: unknown) {
+      console.warn("Microphone access error:", micErr);
+      const isSecure =
+        typeof window !== "undefined" &&
+        (window.location.protocol === "https:" ||
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1");
+
+      if (!isSecure) {
+        setErrorMessage(
+          "Notice: Chrome blocks microphone permissions on plain HTTP connections. Please use HTTPS or localhost, or use the text box & quick chips below.",
+        );
+      } else {
+        setErrorMessage(
+          "Microphone permission was not granted. Please check your browser's microphone permissions in the URL address bar.",
+        );
+      }
+      setVoiceState("idle");
+      return;
+    }
+
+    // Step 2: Also attempt browser Web Speech API for low-latency live subtitles
+    try {
       const win = window as unknown as IWindow;
       const SpeechRecognitionConstructor =
         win.SpeechRecognition || win.webkitSpeechRecognition;
 
       if (SpeechRecognitionConstructor) {
         const recognition = new SpeechRecognitionConstructor();
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = "en-IN"; // Handles Indian English & Hinglish well
-
-        recognition.onstart = () => {
-          setVoiceState("listening");
-        };
+        recognition.lang = "en-IN";
 
         recognition.onresult = (event: SpeechRecognitionEvent) => {
           let interim = "";
@@ -186,112 +448,20 @@ export function VoiceRecruiterModal({ isOpen, onClose }: VoiceRecruiterModalProp
             }
           }
           const text = final || interim;
-          setLiveTranscript(text);
-
-          if (final.trim()) {
-            handleUserMessageRef.current(final.trim());
+          if (text.trim()) {
+            setLiveTranscript(text);
           }
         };
 
         recognition.onerror = (err: unknown) => {
-          console.warn("Speech recognition error:", err);
-          setVoiceState("idle");
+          console.warn("Speech recognition warning:", err);
         };
 
-        recognition.onend = () => {
-          setVoiceState((prev) => (prev === "listening" ? "idle" : prev));
-        };
-
+        recognition.start();
         recognitionRef.current = recognition;
       }
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          /* ignore */
-        }
-      }
-      if (synthRef.current) {
-        synthRef.current.cancel();
-      }
-    };
-  }, []);
-
-  // Stop audio on close
-  useEffect(() => {
-    if (!isOpen) {
-      if (synthRef.current) synthRef.current.cancel();
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          /* ignore */
-        }
-      }
-      setVoiceState("idle");
-    }
-  }, [isOpen]);
-
-  const speakText = (text: string) => {
-    if (!audioEnabled || typeof window === "undefined" || !synthRef.current) return;
-    synthRef.current.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-IN";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    // Pick a natural voice if available
-    const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find(
-      (v) =>
-        v.lang.includes("en-IN") ||
-        v.name.includes("Google") ||
-        v.name.includes("Natural"),
-    );
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
-
-    utterance.onstart = () => {
-      setVoiceState("speaking");
-    };
-
-    utterance.onend = () => {
-      setVoiceState("idle");
-    };
-
-    utterance.onerror = () => {
-      setVoiceState("idle");
-    };
-
-    synthRef.current.speak(utterance);
-  };
-
-  const startListening = () => {
-    if (synthRef.current) synthRef.current.cancel();
-    if (voiceState === "listening") {
-      try {
-        recognitionRef.current?.stop();
-      } catch {
-        /* ignore */
-      }
-      setVoiceState("idle");
-      return;
-    }
-
-    if (recognitionRef.current) {
-      try {
-        setLiveTranscript("");
-        recognitionRef.current.start();
-      } catch (err) {
-        console.warn("Recognition start failed:", err);
-      }
-    } else {
-      alert("Speech recognition is not supported in this browser. You can type below!");
+    } catch (recErr) {
+      console.warn("SpeechRecognition start error:", recErr);
     }
   };
 
@@ -348,10 +518,11 @@ ${persona.redFlags.map((t) => `✗ ${t}`).join("\n")}
   };
 
   const handleReset = () => {
-    if (synthRef.current) synthRef.current.cancel();
+    cleanupAudio();
     setPersona(INITIAL_PERSONA);
     setMessages([]);
     setLiveTranscript("");
+    setErrorMessage(null);
     setCreatedJobInfo(null);
     setMatchedCandidates([]);
     setVoiceState("idle");
@@ -446,19 +617,39 @@ ${persona.redFlags.map((t) => `✗ ${t}`).join("\n")}
             </div>
 
             {/* Central Animated Voice Orb */}
-            <div className="my-auto py-8 flex flex-col items-center justify-center gap-4">
-              <VoiceOrb state={voiceState} onClick={startListening} />
+            <div className="my-auto py-6 flex flex-col items-center justify-center gap-3">
+              <VoiceOrb state={voiceState} audioLevel={audioLevel} onClick={startListening} />
 
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-2">
                 <span className="text-xs font-black uppercase tracking-widest text-text-muted">
                   {voiceState === "listening"
-                    ? "Listening to you... speak now"
+                    ? "Listening... speak now"
                     : voiceState === "thinking"
                       ? "Analyzing & updating persona..."
                       : voiceState === "speaking"
                         ? "Huptle is speaking..."
                         : "Click the orb or speak to start"}
                 </span>
+
+                {/* Stop & Submit Pill when listening */}
+                {voiceState === "listening" && (
+                  <button
+                    type="button"
+                    onClick={stopListeningAndProcess}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[11px] font-black hover:bg-rose-500/25 transition-all cursor-pointer shadow-sm animate-pulse"
+                  >
+                    <Square size={10} className="fill-current" />
+                    <span>Done Speaking (Tap to Process)</span>
+                  </button>
+                )}
+
+                {/* Error Banner */}
+                {errorMessage && (
+                  <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs flex items-start gap-2 max-w-sm text-left mt-1">
+                    <AlertCircle size={15} className="shrink-0 mt-0.5 text-amber-400" />
+                    <span className="leading-tight">{errorMessage}</span>
+                  </div>
+                )}
 
                 {/* Live Speech Subtitle */}
                 {liveTranscript && (
@@ -477,7 +668,7 @@ ${persona.redFlags.map((t) => `✗ ${t}`).join("\n")}
                   <button
                     key={idx}
                     onClick={() => handleUserMessage(reply)}
-                    className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-surface-2 border border-border hover:border-accent hover:text-accent text-text-muted transition-all active:scale-95"
+                    className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-surface-2 border border-border hover:border-accent hover:text-accent text-text-muted transition-all active:scale-95 cursor-pointer"
                   >
                     💬 {reply}
                   </button>
@@ -502,7 +693,7 @@ ${persona.redFlags.map((t) => `✗ ${t}`).join("\n")}
                 <button
                   type="submit"
                   disabled={!manualText.trim() || voiceState === "thinking"}
-                  className="w-8 h-8 rounded-xl bg-accent text-white flex items-center justify-center disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
+                  className="w-8 h-8 rounded-xl bg-accent text-white flex items-center justify-center disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform cursor-pointer"
                 >
                   <Send size={14} />
                 </button>
@@ -604,7 +795,7 @@ ${persona.redFlags.map((t) => `✗ ${t}`).join("\n")}
               <button
                 onClick={handleCopyPersona}
                 disabled={!persona.roleTitle && !persona.archetype}
-                className="px-3.5 py-2.5 rounded-xl border border-border bg-surface-2 hover:border-accent text-text-muted hover:text-text-primary text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-40"
+                className="px-3.5 py-2.5 rounded-xl border border-border bg-surface-2 hover:border-accent text-text-muted hover:text-text-primary text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-40 cursor-pointer"
               >
                 {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                 <span>{copied ? "Copied Brief!" : "Copy Persona Brief"}</span>
@@ -614,7 +805,7 @@ ${persona.redFlags.map((t) => `✗ ${t}`).join("\n")}
                 <button
                   onClick={handleSearchTalent}
                   disabled={isSearchingTalent || (!persona.roleTitle && !persona.archetype)}
-                  className="px-4 py-2.5 rounded-xl border border-accent/30 bg-accent/10 hover:bg-accent/20 text-accent text-xs font-black flex items-center gap-2 transition-all disabled:opacity-40"
+                  className="px-4 py-2.5 rounded-xl border border-accent/30 bg-accent/10 hover:bg-accent/20 text-accent text-xs font-black flex items-center gap-2 transition-all disabled:opacity-40 cursor-pointer"
                 >
                   <Users size={14} />
                   <span>{isSearchingTalent ? "Matching..." : "Match Talent Pool"}</span>
@@ -623,7 +814,7 @@ ${persona.redFlags.map((t) => `✗ ${t}`).join("\n")}
                 <button
                   onClick={handleCreateJob}
                   disabled={isCreatingJob || (!persona.roleTitle && !persona.archetype)}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent to-indigo-600 hover:opacity-90 text-white text-xs font-black flex items-center gap-2 transition-all shadow-lg shadow-accent/20 active:scale-95 disabled:opacity-40"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent to-indigo-600 hover:opacity-90 text-white text-xs font-black flex items-center gap-2 transition-all shadow-lg shadow-accent/20 active:scale-95 disabled:opacity-40 cursor-pointer"
                 >
                   <Briefcase size={14} />
                   <span>{isCreatingJob ? "Creating Live Job..." : "⚡ Create Live Job"}</span>

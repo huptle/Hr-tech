@@ -25,12 +25,14 @@ export function VoiceOrb({
   const isSpeaking = state === "speaking";
 
   return (
-    <div
+    <button
+      type="button"
       className={cn(
-        "relative flex items-center justify-center cursor-pointer select-none group",
+        "relative flex items-center justify-center cursor-pointer select-none group border-none bg-transparent p-0 outline-none focus:outline-none",
         className,
       )}
       onClick={onClick}
+      aria-label={isListening ? "Stop listening" : "Tap to speak"}
     >
       {/* Outer ambient pulsing aura */}
       <motion.div
@@ -158,7 +160,7 @@ export function VoiceOrb({
           </span>
         </div>
       </motion.div>
-    </div>
+    </button>
   );
 }
 

@@ -43,3 +43,24 @@ export async function geminiGenerateJson<T>(prompt: string): Promise<T> {
   const parsed = JSON.parse(stripJsonFence(raw)) as T;
   return parsed;
 }
+
+export async function geminiGenerateJsonWithAudio<T>(
+  prompt: string,
+  audioBase64: string,
+  mimeType = "audio/webm",
+): Promise<T> {
+  const model = getModel(true);
+  const res = await model.generateContent([
+    prompt,
+    {
+      inlineData: {
+        data: audioBase64,
+        mimeType,
+      },
+    },
+  ]);
+  const raw = res.response.text();
+  if (!raw?.trim()) throw new Error("Empty JSON from AI");
+  const parsed = JSON.parse(stripJsonFence(raw)) as T;
+  return parsed;
+}
