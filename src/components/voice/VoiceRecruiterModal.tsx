@@ -78,6 +78,7 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 interface IWindow extends Window {
   webkitSpeechRecognition?: SpeechRecognitionConstructor;
   SpeechRecognition?: SpeechRecognitionConstructor;
+  AudioContext?: typeof AudioContext;
   webkitAudioContext?: typeof AudioContext;
 }
 
@@ -358,7 +359,7 @@ export function VoiceRecruiterModal({ isOpen, onClose }: VoiceRecruiterModalProp
         // Visualizer with AudioContext
         try {
           const win = window as unknown as IWindow;
-          const AudioContextConstructor = win.AudioContext || win.webkitAudioContext;
+          const AudioContextConstructor = window.AudioContext || win.webkitAudioContext;
           if (AudioContextConstructor) {
             const ctx = new AudioContextConstructor();
             audioContextRef.current = ctx;
