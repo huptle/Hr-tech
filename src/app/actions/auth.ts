@@ -23,8 +23,15 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
   const name = String(formData.get("name") ?? "").trim();
   const email = normalizeEmail(String(formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
-  const designation = String(formData.get("designation") ?? "HR Manager").trim() || "HR Manager";
-  const company = String(formData.get("company") ?? "").trim();
+  const accountType = String(formData.get("accountType") ?? "hr").trim().toLowerCase();
+  const isBroker = accountType === "broker";
+  const designation = isBroker
+    ? "Broker"
+    : String(formData.get("designation") ?? "HR Manager").trim() || "HR Manager";
+  const company = isBroker
+    ? String(formData.get("agencyName") ?? formData.get("company") ?? "").trim()
+    : String(formData.get("company") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
 
   if (!name || name.length < 2) return { error: "Please enter your name." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter a valid email address." };
@@ -36,22 +43,47 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
   const passwordHash = await hashPassword(password);
   const totalUsers = await prisma.hrUser.count();
 
+  // Generate unique broker ID if broker
+  let brokerCode = "";
+  if (isBroker) {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    brokerCode = `BRK-${randomSuffix}`;
+  }
+
   const user = await prisma.hrUser.create({
     data: {
       name,
       email,
       passwordHash,
-      role: designation,
+      role: isBroker ? "Broker" : designation,
       designation,
       company,
+      phone,
       isAdmin: totalUsers === 0,
+      ...(isBroker
+        ? {
+            brokerProfile: {
+              create: {
+                brokerCode,
+                agencyName: company || name,
+                status: "pending",
+                phone,
+                commissionRate: 10,
+              },
+            },
+          }
+        : {}),
     },
   });
 
   const token = await createSessionToken({ uid: user.id, email: user.email });
   await setSessionCookie(token);
   revalidatePath("/", "layout");
-  redirect("/");
+  if (isBroker) {
+    redirect("/broker");
+  } else {
+    redirect("/");
+  }
 }
 
 export async function signIn(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -69,7 +101,11 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
   const token = await createSessionToken({ uid: user.id, email: user.email });
   await setSessionCookie(token);
   revalidatePath("/", "layout");
-  redirect("/");
+  if (user.role.toLowerCase() === "broker") {
+    redirect("/broker");
+  } else {
+    redirect("/");
+  }
 }
 
 export async function signOut(): Promise<void> {

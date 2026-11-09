@@ -6,7 +6,16 @@ export const dynamic = "force-dynamic";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   return (
-    <Shell user={{ name: user.name, role: user.role, initials: user.initials }}>
+    <Shell
+      user={{
+        name: user.name,
+        role: user.role,
+        initials: user.initials,
+        isAdmin: user.isAdmin,
+        isBroker: user.isBroker,
+        brokerProfile: user.brokerProfile,
+      }}
+    >
       {children}
     </Shell>
   );

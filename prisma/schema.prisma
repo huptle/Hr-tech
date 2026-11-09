@@ -26,6 +26,47 @@ model HrUser {
   templates    Template[]
   schedulingCampaigns SchedulingCallCampaign[]
   createdJobs         Job[]                  @relation("JobCreator")
+  brokerProfile       BrokerProfile?
+}
+
+model BrokerProfile {
+  id             String            @id @default(cuid())
+  brokerCode     String            @unique // e.g., "BRK-7841"
+  userId         String            @unique
+  user           HrUser            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agencyName     String            @default("")
+  status         String            @default("pending") // "pending", "approved", "rejected"
+  commissionRate Float             @default(10) // default 10%
+  payoutDetails  String            @default("") // UPI, bank info, pan
+  phone          String            @default("")
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  candidates     BrokerCandidate[]
+  applications   Candidate[]       @relation("BrokerCandidateApplications")
+  commissions    Commission[]
+  jobsPosted     Job[]             @relation("BrokerPostedJobs")
+}
+
+model BrokerCandidate {
+  id              String            @id @default(cuid())
+  brokerId        String
+  broker          BrokerProfile     @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  name            String
+  email           String
+  phone           String?
+  location        String            @default("")
+  skills          String            @default("")
+  experienceYears Float             @default(0)
+  expectedSalary  String            @default("")
+  currentCompany  String            @default("")
+  resumeUrl       String            @default("")
+  parsedDataJson  String            @default("")
+  notes           String            @default("")
+  consentGiven    Boolean           @default(true)
+  consentDate     DateTime          @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  applications    Candidate[]       @relation("BrokerCandidateSource")
 }
 
 model Job {
@@ -39,6 +80,12 @@ model Job {
   mode                 String              @default("Remote")
   createdById          String?
   createdBy            HrUser?             @relation("JobCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  brokerPosterId       String?
+  brokerPoster         BrokerProfile?      @relation("BrokerPostedJobs", fields: [brokerPosterId], references: [id], onDelete: SetNull)
+  isBrokerEligible     Boolean             @default(true)
+  commissionType       String              @default("fixed") // "fixed" | "percentage"
+  commissionAmount     Float               @default(20000)
+  approvalStatus       String              @default("approved") // "approved" | "pending_approval" | "rejected"
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   candidates           Candidate[]
@@ -46,6 +93,7 @@ model Job {
   slots                InterviewSlot[]
   activities           Activity[]
   schedulingCampaigns  SchedulingCallCampaign[]
+  commissions          Commission[]
 }
 
 model ScreeningQuestion {
@@ -60,6 +108,12 @@ model Candidate {
   id                    String          @id @default(cuid())
   jobId                 String
   job                   Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  brokerId              String?
+  broker                BrokerProfile?  @relation("BrokerCandidateApplications", fields: [brokerId], references: [id], onDelete: SetNull)
+  brokerCandidateId     String?
+  brokerCandidate       BrokerCandidate? @relation("BrokerCandidateSource", fields: [brokerCandidateId], references: [id], onDelete: SetNull)
+  source                String          @default("direct") // "direct" | "broker" | "partner"
+  consentVerified       Boolean         @default(false)
   name                  String
   email                 String
   phone                 String?
@@ -88,6 +142,29 @@ model Candidate {
   bookedSlots           InterviewSlot[]
   activities            Activity[]
   schedulingCalls       SchedulingCall[]
+  commissions           Commission[]
+}
+
+model Commission {
+  id             String        @id @default(cuid())
+  brokerId       String
+  broker         BrokerProfile @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  candidateId    String
+  candidate      Candidate     @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId          String
+  job            Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  amount         Float
+  rate           Float         @default(0)
+  type           String        @default("fixed") // "fixed" | "percentage"
+  status         String        @default("Pending") // "Pending", "Approved", "Paid", "Reversed"
+  joiningDate    DateTime?
+  verifiedAt     DateTime?
+  verifiedById   String?
+  paidAt         DateTime?
+  transactionRef String        @default("")
+  notes          String        @default("")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model InterviewSlot {
