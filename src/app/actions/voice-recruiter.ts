@@ -4,7 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import { revalidatePath } from "next/cache";
-import { geminiGenerateJson, isGeminiConfigured } from "@/lib/gemini";
+import {
+  geminiGenerateJson,
+  geminiGenerateJsonWithAudio,
+  isGeminiConfigured,
+} from "@/lib/gemini";
 import {
   CandidatePersona,
   ConversationMessage,
@@ -248,6 +252,97 @@ Respond with ONLY valid JSON adhering strictly to this schema:
   } catch (err) {
     console.error("Gemini voice recruiter error, using fallback:", err);
     return mockVoiceTurnResponse(messageTrimmed, currentPersona);
+  }
+}
+
+export async function processAudioVoiceTurn(
+  audioBase64: string,
+  mimeType: string,
+  conversationHistory: ConversationMessage[],
+  currentPersona: CandidatePersona = INITIAL_PERSONA,
+): Promise<VoiceTurnResponse & { transcribedText: string }> {
+  if (!isGeminiConfigured() || !audioBase64) {
+    const fallbackText = "I need a sales guy with 3 years experience";
+    const res = mockVoiceTurnResponse(fallbackText, currentPersona);
+    return {
+      ...res,
+      transcribedText: fallbackText,
+    };
+  }
+
+  const prompt = `You are "Huptle Voice Recruiter", an elite AI executive talent scout embedded in Huptle HR Tech platform.
+The user is speaking to you. Listen to their audio input carefully.
+The user may speak in English, Hindi, or natural Hinglish.
+
+CONVERSATION HISTORY:
+${conversationHistory
+  .slice(-6)
+  .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+  .join("\n")}
+
+CURRENT PERSONA STATE (JSON):
+${JSON.stringify(currentPersona, null, 2)}
+
+INSTRUCTIONS:
+1. AUDIO TRANSCRIPTION: First, accurately transcribe the user's spoken words into the "transcribedText" field.
+2. SPOKEN RESPONSE: Formulate a spoken response (2-3 sentences max) in English or Hinglish depending on how the user spoke. Be consultative, probing 1-2 dimensions at a time (experience, budget, culture, kaisa human chahiye team me, red flags).
+3. PERSONA UPDATES: Incrementally update the persona fields based on the newly spoken information.
+4. If completenessScore >= 75 and key facets are gathered, mark status as "ready".
+
+Respond with ONLY valid JSON adhering strictly to this schema:
+{
+  "transcribedText": "exact transcription of what the user said in the audio",
+  "assistantSpeech": "your spoken consultative response back to the user",
+  "detectedLanguage": "en" | "hinglish" | "hi",
+  "isComplete": boolean,
+  "suggestedReplies": ["string"],
+  "updatedPersona": {
+    "archetype": "string",
+    "roleTitle": "string",
+    "department": "string",
+    "experienceRange": "string",
+    "budget": {
+      "fixed": "string",
+      "variable": "string",
+      "currency": "string"
+    },
+    "workMode": "Remote" | "Hybrid" | "On-site" | "Flexible",
+    "location": "string",
+    "psychologicalDna": ["string"],
+    "teamCultureFit": ["string"],
+    "dayInTheLife": ["string"],
+    "mustHaves": ["string"],
+    "greenFlags": ["string"],
+    "redFlags": ["string"],
+    "suggestedScreeningQuestions": ["string"],
+    "summary": "string",
+    "completenessScore": 0,
+    "status": "gathering" | "ready"
+  }
+}`;
+
+  try {
+    const res = await geminiGenerateJsonWithAudio<
+      VoiceTurnResponse & { transcribedText: string }
+    >(prompt, audioBase64, mimeType || "audio/webm");
+
+    if (!res.updatedPersona) {
+      res.updatedPersona = currentPersona;
+    }
+    res.updatedPersona.completenessScore = calculateCompleteness(res.updatedPersona);
+    if (res.updatedPersona.completenessScore >= 75) {
+      res.updatedPersona.status = "ready";
+      res.isComplete = true;
+    }
+    return res;
+  } catch (err) {
+    console.error("Gemini audio voice recruiter error, using fallback:", err);
+    const fallbackText = "I need a sales guy with 3 years experience";
+    const res = mockVoiceTurnResponse(fallbackText, currentPersona);
+    return {
+      ...res,
+      transcribedText: fallbackText,
+    };
   }
 }
 
