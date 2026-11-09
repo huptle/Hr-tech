@@ -180,3 +180,9 @@ test("Voice Recruiter: compiles full human-centric Job Description with psycholo
   assert.ok(jd.includes("Dealbreakers"));
   assert.ok(jd.includes("Needs heavy micromanagement"));
 });
+
+test("Voice Recruiter: audio turn fallback handles audio input transcription parsing", () => {
+  const fallbackText = "I need a sales guy with 3 years experience";
+  const { experience } = parseSalaryAndExperience(fallbackText);
+  assert.equal(experience, "3 years");
+});
