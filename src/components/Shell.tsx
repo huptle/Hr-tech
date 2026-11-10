@@ -19,7 +19,6 @@ import {
   Handshake,
   Coins,
   ShieldCheck,
-  Mic,
 } from 'lucide-react';
 import { signOut } from '@/app/actions/auth';
 import { ThemeToggle } from './theme-toggle';
@@ -195,12 +194,8 @@ export function Shell({
                     </div>
                     <div className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 relative z-10">Premium</div>
                     <div className="text-xs font-bold text-white leading-tight relative z-10">Scale faster with Huptle AI Agents</div>
-                    <button
-                      onClick={() => setIsVoiceModalOpen(true)}
-                      type="button"
-                      className="mt-4 w-full py-2.5 rounded-xl bg-white text-accent text-[11px] font-black flex items-center justify-center gap-2 shadow-xl hover:bg-white/90 transition-all relative z-10 cursor-pointer"
-                    >
-                      <Sparkles size={12} /> Launch Voice Recruiter
+                    <button className="mt-4 w-full py-2.5 rounded-xl bg-white text-accent text-[11px] font-black flex items-center justify-center gap-2 shadow-xl hover:bg-white/90 transition-all relative z-10">
+                      <Sparkles size={12} /> Get Started
                     </button>
                   </div>
                 )}
@@ -249,17 +244,6 @@ export function Shell({
           <div className="flex-1" />
 
           <div className="flex items-center gap-2 lg:gap-3 shrink-0">
-            {/* Huptle Voice Recruiter AI Button */}
-            <button
-              onClick={() => setIsVoiceModalOpen(true)}
-              type="button"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-accent via-indigo-600 to-blue-600 text-white font-black text-xs shadow-md shadow-accent/25 hover:opacity-95 active:scale-95 transition-all group cursor-pointer"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping group-hover:scale-125 transition-transform" />
-              <Mic size={14} />
-              <span className="hidden sm:inline">Voice Mode</span>
-            </button>
-
             {user.isBroker && user.brokerProfile && (
               <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-accent/10 border border-accent/20 text-accent text-xs font-black">
                 <span>Partner ID:</span>
