@@ -297,7 +297,7 @@ const fullHtml = `<!DOCTYPE html>
     <h1>Huptle HR Platform</h1>
     <p>Application architecture, flows, and feature map</p>
     <p><strong>HR Portal + Candidate Apply Portal</strong></p>
-    <p style="margin-top:40px;font-size:10pt;color:#888;">Generated from Huptle HR-tech repository</p>
+    <p style="margin-top:20px;font-size:12pt;font-weight:700;color:#1e1b4b;">Created by: Aaryan Gupta</p>
   </div>
   ${body}
 </body>
