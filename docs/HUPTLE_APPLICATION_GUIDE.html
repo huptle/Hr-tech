@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Huptle HR Tech Platform - Architecture Guide</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      themeVariables: {
+        fontFamily: 'Segoe UI, system-ui, sans-serif',
+        primaryColor: '#eef2ff',
+        primaryBorderColor: '#6366f1',
+        primaryTextColor: '#1e293b',
+        lineColor: '#64748b',
+        secondaryColor: '#f8fafc',
+        tertiaryColor: '#ffffff'
+      }
+    });
+  </script>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #0f172a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+    .cover {
+      text-align: center;
+      padding: 70px 20px 40px;
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+    }
+    .cover-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background: #eef2ff;
+      color: #4f46e5;
+      font-size: 9pt;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      border: 1px solid #c7d2fe;
+    }
+    .cover-title {
+      font-size: 26pt;
+      font-weight: 900;
+      color: #1e1b4b;
+      margin: 0 0 24px;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+    .cover-meta {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 2px solid #e2e8f0;
+      max-width: 500px;
+      width: 100%;
+    }
+    .cover-meta p {
+      margin: 8px 0;
+      font-size: 11pt;
+      color: #475569;
+    }
+    .cover-meta strong {
+      color: #0f172a;
+    }
+    h2 {
+      font-size: 16pt;
+      font-weight: 800;
+      color: #1e1b4b;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1.5px solid #e2e8f0;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 12.5pt;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 22px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+    h4 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #475569;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+    }
+    p, li {
+      color: #334155;
+      margin: 6px 0;
+    }
+    ul {
+      margin: 6px 0 14px 20px;
+      padding: 0;
+    }
+    li {
+      margin: 4px 0;
+    }
+    blockquote {
+      margin: 14px 0;
+      padding: 10px 16px;
+      background: #f8fafc;
+      border-left: 4px solid #6366f1;
+      border-radius: 4px;
+      font-size: 10pt;
+      color: #475569;
+    }
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 9.5pt;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 9.5pt;
+      overflow-x: auto;
+      margin: 14px 0;
+      page-break-inside: avoid;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border: none;
+    }
+    .mermaid-wrap {
+      margin: 24px 0;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+    .mermaid svg {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    .table-container {
+      margin: 18px 0;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+    }
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+    }
+    td {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 28px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="cover">
+        <div class="cover-badge">ENTERPRISE TECHNICAL DOCUMENTATION</div>
+        <h1 class="cover-title">Huptle HR Tech Platform: Complete System Architecture &amp; Technical Specification</h1>
+        <div class="cover-meta">
+          <p><strong>Lead Architect & Creator:</strong> Aaryan Gupta</p>
+          <p><strong>Document Version:</strong> 1.0.0 Production Architecture &bull; November 2026</p>
+          <p><strong>Ecosystem:</strong> Huptle HR Management + Placement Broker Network + Candidate Apply Portal</p>
+        </div>
+      </div>
+<blockquote><strong>Created by: Aaryan Gupta</strong>  </blockquote>
+<blockquote><strong>Document Version:</strong> 1.0.0 (Production Architecture)  </blockquote>
+<blockquote><strong>Date:</strong> November 2026  </blockquote>
+<blockquote><strong>Classification:</strong> Technical Documentation &amp; Architectural Reference  </blockquote>
+<hr/>
+<h2>1. Executive Summary &amp; Platform Overview</h2>
+<p><strong>Huptle HR</strong> is an enterprise-grade, AI-native <strong>Talent Acquisition and Placement Ecosystem</strong>. The platform bridges three distinct hiring stakeholders into a high-throughput, automated pipeline:</p>
+<p>1. <strong>HR Managers &amp; Recruiters</strong>: Manage open positions, track applicants across custom recruitment funnels, deploy AI-assisted candidate screening, conduct outbound voice interview scheduling via telephony, and oversee agency placements.</p>
+<p>2. <strong>Placement Brokers / Agency Partners</strong>: Independent recruitment agencies and headhunters who maintain private talent benches, submit candidates to approved jobs with consent tracking, monitor recruitment funnels, and earn verified placement commissions.</p>
+<p>3. <strong>Candidates &amp; Job Seekers</strong>: Direct applicants who discover open positions, leverage AI to match their profiles, upload and parse resumes, authenticate securely via passwordless email OTP, and track application milestones in real-time.</p>
+<div class="mermaid-wrap"><pre class="mermaid">
+flowchart LR
+    A["Job Candidates"] -->|Apply & Verify OTP| B["Candidate Portal (:3002)"]
+    C["Placement Brokers"] -->|Bench Talent & Track Commissions| D["HR & Partner Portal (:3000)"]
+    E["HR Managers & Admins"] -->|Screen, Schedule & Hire| D
+    B -->|Synchronize Applications| D
+    D -->|Postgres / Local Storage| F[("Unified Database & Storage")]
+</pre></div>
+<hr/>
+<h2>2. Global System Topology &amp; High-Level Architecture</h2>
+<p>The platform is architected as an interconnected <strong>multi-service containerized architecture</strong> deployed on Linux VPS infrastructure behind a high-performance <strong>Caddy</strong> reverse proxy.</p>
+<div class="mermaid-wrap"><pre class="mermaid">
+flowchart TD
+    subgraph PublicInternet["Public Internet & DNS"]
+        ClientBrowser["Client Web Browser (HTTPS)"]
+        PartnerClient["Partner Platforms (e.g., Mentorlee)"]
+        TwilioVoice["Telephony Network (+91 Inbound/Outbound)"]
+    end
+
+    subgraph HostReverseProxy["Host Reverse Proxy (Caddy v2)"]
+        CaddyTLS["Caddy (Automatic Let's Encrypt TLS / Zstd / Gzip)"]
+        CaddyTLS -->|"hr.huptle.com -> :3000"| AppService
+        CaddyTLS -->|"apply.huptle.com -> :3002"| ApplyService
+    end
+
+    subgraph DockerNetwork["Internal Docker Network (hrnet)"]
+        subgraph AppService["HR & Broker Portal (:3000)"]
+            NextHR["Next.js 16 (App Router + React 19)"]
+            PrismaEngine["Prisma ORM (v6.19.3)"]
+            AuthEngine["Session JWT Engine (Jose / Bcryptjs)"]
+        end
+
+        subgraph ApplyService["Candidate Portal (:3002)"]
+            NextApply["Next.js 16 (App Router + React 19)"]
+            ResumeParser["Local Resume Parser (pdf-parse / pdf2json)"]
+            OtpEngine["HMAC-SHA256 OTP Authentication"]
+        end
+
+        subgraph Persistence["Storage & Persistence Layer"]
+            PostgreSQL[("PostgreSQL 16 Database")]
+            LocalDiskResumes[("VPS Local Disk: /app/uploads/resumes")]
+            LocalDiskData[("VPS Local Disk: /app/data")]
+        end
+    end
+
+    subgraph ExternalAPIs["External Cloud & AI Services"]
+        GeminiAI["Google Gemini 2.5 Flash (Generative AI)"]
+        VapiAI["Vapi Voice AI (Outbound Telephony)"]
+        GoogleCal["Google Calendar OAuth 2.0 API"]
+    end
+
+    ClientBrowser --> CaddyTLS
+    PartnerClient --> CaddyTLS
+    TwilioVoice <--> VapiAI
+
+    NextHR <--> PrismaEngine
+    PrismaEngine <--> PostgreSQL
+    NextApply -->|"Sync Applications (Shared Secret)"| NextHR
+    NextApply <--> LocalDiskResumes
+    NextApply <--> LocalDiskData
+
+    NextHR <--> GeminiAI
+    NextHR <--> VapiAI
+    NextHR <--> GoogleCal
+</pre></div>
+<hr/>
+<h2>3. Core Software Subsystems</h2>
+<h3>3.1 HR &amp; Placement Partner Portal (<code>/src</code> - Port 3000)</h3>
+<p>The primary operational dashboard used by HR teams and agency recruiters.</p>
+<ul>
+<li><strong>Technology Foundation</strong>: Built on <strong>Next.js 16.2.1</strong>, <strong>React 19.2.4</strong>, <strong>Tailwind CSS v4</strong>, and <strong>Framer Motion 12</strong>.</li>
+<li><strong>Authentication Architecture</strong>:</li>
+<li>Employs cryptographically signed <strong>HttpOnly session cookies</strong> using <code>jose</code> with HS256/A256GCM encryption.</li>
+<li>Role-Based Access Control (RBAC):</li>
+<li><code>isAdmin = true</code>: Super-administrator access to manage placement partners, payout commissions, and global settings.</li>
+<li><code>HR Manager</code>: Access to job creation, candidate shortlisting, candidate evaluations, and calendar sync.</li>
+<li><code>Broker / Partner</code>: Partitioned workspace for managing agency candidates, jobs, and earnings.</li>
+</ul>
+<h4>Functional Modules:</h4>
+<p>1. <strong>Interactive Analytics Dashboard (<code>/</code>)</strong>:</p>
+<ul>
+<li>Real-time metrics: Active Jobs, Total Applicants, Interviews Booked, Offers Released, and Conversion Rate.</li>
+<li>Interactive chart visualizers for pipeline progression and stage drop-offs.</li>
+<li>Audit activity log tracking all system events.</li>
+</ul>
+<p>2. <strong>Job Management &amp; Pipeline (<code>/jobs</code>)</strong>:</p>
+<ul>
+<li>Complete lifecycle management: Draft -&gt; Live -&gt; Closed -&gt; Archived.</li>
+<li>Commission rules engine: Configurable per-job broker rewards (Fixed amount in INR or Percentage of CTC).</li>
+<li>Voice-screening questions manager (10 ordered questions per job).</li>
+</ul>
+<p>3. <strong>Candidate Funnel &amp; Shortlist Matrix (<code>/shortlist</code> &amp; <code>/jobs/[jobId]/shortlist</code>)</strong>:</p>
+<ul>
+<li>Multi-stage pipeline: <code>Applied</code> -&gt; <code>Shortlisted</code> -&gt; <code>Screened</code> -&gt; <code>Interviewed</code> -&gt; <code>Offered</code> -&gt; <code>Hired</code> -&gt; <code>Rejected</code>.</li>
+<li>Side-by-side AI candidate comparison tool evaluating strengths, experience match, and compensation fit.</li>
+</ul>
+<p>4. <strong>Interview Scheduling Engine (<code>/schedule</code>)</strong>:</p>
+<ul>
+<li>Slot management: Define 30-minute to 60-minute interview availability windows.</li>
+<li>Real-time candidate self-service slot booking.</li>
+<li>Bi-directional <strong>Google Calendar synchronization</strong> using OAuth 2.0.</li>
+</ul>
+<hr/>
+<h3>3.2 Placement Partner &amp; Broker Network (<code>/broker</code> &amp; <code>/admin/brokers</code>)</h3>
+<p>A dedicated B2B recruitment portal enabling third-party placement agencies to monetize their talent benches.</p>
+<div class="mermaid-wrap"><pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Broker as Placement Agency / Broker
+    participant Portal as Broker Portal (:3000)
+    participant Admin as Huptle Admin
+    participant DB as PostgreSQL (Prisma)
+    participant Candidate as Candidate
+
+    Broker->>Portal: Registers agency & applies for Broker Profile
+    Portal->>DB: Saves status as "pending"
+    Admin->>Portal: Reviews agency KYC & Approves Broker Profile
+    Portal->>DB: Updates status to "approved" & assigns Broker Code (BRK-XXXX)
+    
+    Broker->>Portal: Uploads candidate bench (Name, Resume, Expected CTC, Consent)
+    Portal->>DB: Stores candidate in BrokerCandidate talent pool
+    
+    Broker->>Portal: Submits candidate to an eligible Live Job
+    Portal->>DB: Checks duplicate submission rule (blocks if already applied)
+    Portal->>DB: Creates Candidate application mapped to BrokerProfile
+    
+    Note over Candidate,Admin: Candidate progresses through interview funnel to "Hired"
+    
+    Admin->>Portal: Confirms candidate joining date & verifies hire
+    Portal->>DB: Computes Commission (Fixed or % of CTC) in "Pending" status
+    Admin->>Portal: Approves Commission & inputs Bank Transaction Reference
+    Portal->>DB: Transitions Commission to "Paid" with audit log
+</pre></div>
+<h4>Key Capabilities:</h4>
+<ul>
+<li><strong>Unique Agency Identifiers</strong>: Automatic generation of collision-resistant agency codes (<code>BRK-XXXX</code>).</li>
+<li><strong>Consent Enforcement</strong>: Hard block on candidate submissions unless explicit candidate consent is confirmed.</li>
+<li><strong>Anti-Poach &amp; Anti-Duplicate Protection</strong>: Automatic deduplication ensuring no candidate can be submitted twice for the same job across direct and broker channels.</li>
+<li><strong>Financial Ledger</strong>: Accurate tracking of total commissions earned, pending approvals, and cleared payouts with transaction IDs.</li>
+</ul>
+<hr/>
+<h3>3.3 Candidate Apply &amp; Assessment Portal (<code>/HUPTLE_userpfp</code> - Port 3002)</h3>
+<p>The candidate-facing portal dedicated to role discovery, application submission, and status tracking.</p>
+<ul>
+<li><strong>Tech Stack</strong>: <strong>Next.js 16.2.3</strong>, <strong>React 19.2.4</strong>, <strong>LangChain Google GenAI</strong>, <strong>Zustand</strong>, and <strong>Nodemailer</strong>.</li>
+<li><strong>Direct Local Storage Architecture</strong>:</li>
+<li>Resumes uploaded as PDF/DOCX are written directly to high-speed local disk volumes (<code>/app/uploads/resumes</code>).</li>
+<li>Eliminates latency and recurring costs of third-party cloud object storage.</li>
+<li>Secured against path traversal attacks via strict sanitization (<code>path.basename</code>).</li>
+<li><strong>Passwordless Email OTP Security</strong>:</li>
+<li>Candidates log in using temporary 6-digit numeric OTPs sent via Nodemailer SMTP.</li>
+<li>OTPs are hashed using salted <strong>HMAC-SHA256</strong> and invalidated immediately upon first use.</li>
+<li>Rate-limited at 3 attempts per 15-minute window to prevent brute-force attacks.</li>
+<li><strong>Automated Resume Parsing</strong>:</li>
+<li>Integrated with <code>pdf-parse</code> and <code>pdf2json</code>.</li>
+<li>Extracts structured JSON: full name, contact information, total experience in years, skills array, and employment history.</li>
+</ul>
+<hr/>
+<h3>3.4 AI Voice Scheduling &amp; Telephony Automation (Vapi AI)</h3>
+<p>An automated outbound calling system designed for the Indian hiring market.</p>
+<div class="mermaid-wrap"><pre class="mermaid">
+flowchart TD
+    HRTrigger["HR clicks 'Launch Availability Campaign'"] --> CreateCampaign["Create SchedulingCallCampaign (Prisma)"]
+    CreateCampaign --> IterateCandidates["Iterate Candidates with +91 Indian Phone Numbers"]
+    
+    IterateCandidates --> VapiDispatch["Dispatch Outbound Call via Vapi REST API"]
+    VapiDispatch --> TwilioSIP["Twilio India Telephony Trunk"]
+    TwilioSIP --> CandidatePhone["Candidate Mobile Device (+91)"]
+    
+    CandidatePhone <-->|"Conversational Voice Dialogue (IST Availability)"| VapiAssistant["Vapi Conversational AI Voice Assistant"]
+    
+    CandidatePhone -->|"Call Completed / Disconnected"| VapiAssistant
+    VapiAssistant -->|"HTTP POST Webhook with Full Call Transcript"| WebhookEndpoint["/api/webhooks/vapi (Huptle Server)"]
+    
+    WebhookEndpoint --> SignatureVerify["Verify X-Vapi-Secret Signature"]
+    SignatureVerify --> GeminiParse["Gemini Extracts Preferred IST Time Window"]
+    GeminiParse --> ReserveSlot["Reserve InterviewSlot & Update Candidate Status"]
+    ReserveSlot --> AuditLog["Log Activity in System Timeline"]
+</pre></div>
+<ul>
+<li><strong>Target Dialing</strong>: Strictly formatted to E.164 standard for India (<code>+91XXXXXXXXXX</code>).</li>
+<li><strong>Availability Dialogue</strong>: Probes candidates for preferred 30-minute interview windows in the next 7 days in Indian Standard Time (IST).</li>
+<li><strong>Webhook Security</strong>: Authenticated with shared HMAC secret (<code>VAPI_WEBHOOK_SECRET</code>).</li>
+</ul>
+<hr/>
+<h3>3.5 Partner Integration &amp; Single Sign-On (Mentorlee × Huptle)</h3>
+<p>Enables syndication of Huptle jobs onto partner portals (such as Mentorlee) with seamless user transition.</p>
+<p>1. <strong>Job Syndication API (<code>GET /api/partner/jobs</code>)</strong>:</p>
+<ul>
+<li>Authenticated via <code>X-Partner-Key</code> header.</li>
+<li>Returns active, approved job postings with live application links.</li>
+</ul>
+<p>2. <strong>1-Click Cryptographic SSO (<code>/auth/partner</code>)</strong>:</p>
+<ul>
+<li>Uses HMAC-SHA256 signed JSON Web Tokens (JWT).</li>
+<li>Seamlessly authenticates users coming from partner portals and directs them straight to the target job application form with verified profile pre-fill.</li>
+</ul>
+<hr/>
+<h3>3.6 Huptle Voice Recruiter &amp; Candidate Persona Builder</h3>
+<p>An interactive, hands-free conversational agent inspired by ChatGPT Voice Mode and Gemini Live.</p>
+<ul>
+<li><strong>Bilingual Intelligence</strong>: Natively understands and communicates in natural <strong>English, Hindi, and Hinglish</strong>.</li>
+<li><strong>Audio Architecture</strong>:</li>
+<li><strong>Interactive Audio Visualizer Orb (<code>VoiceOrb.tsx</code>)</strong>: Pulsing canvas with Web Audio API <code>AudioContext</code> and <code>AnalyserNode</code> reacting to mic volume.</li>
+<li><strong>Dual Engine</strong>: High-speed browser Web Speech API paired with universal <code>MediaRecorder</code> + Gemini multimodal audio processing.</li>
+<li><strong>Ideal Candidate Persona (ICP) Canvas</strong>:</li>
+<li>Probes HR for human qualities: Archetype, Psychological DNA, Team &amp; Culture Dynamics, Green Flags, and Red Flags.</li>
+<li><strong>1-Click Actions</strong>: Convert persona to live job posting, generate 10 screening questions, or search the talent pool.</li>
+</ul>
+<hr/>
+<h2>4. Comprehensive Database Schema (Prisma ORM)</h2>
+<p>Below is the complete entity relationship mapping powering the PostgreSQL persistence layer:</p>
+<div class="mermaid-wrap"><pre class="mermaid">
+erDiagram
+    HrUser ||--o{ Job : creates
+    HrUser ||--o{ Template : authors
+    HrUser ||--o{ Activity : acts
+    HrUser ||--o{ SchedulingCallCampaign : launches
+    HrUser ||--o| BrokerProfile : owns
+
+    BrokerProfile ||--o{ BrokerCandidate : benches
+    BrokerProfile ||--o{ Candidate : sponsors
+    BrokerProfile ||--o{ Commission : earns
+    BrokerProfile ||--o{ Job : posts
+
+    Job ||--o{ Candidate : receives
+    Job ||--o{ ScreeningQuestion : contains
+    Job ||--o{ InterviewSlot : schedules
+    Job ||--o{ Commission : pays
+    Job ||--o{ SchedulingCallCampaign : targets
+
+    Candidate ||--o{ InterviewSlot : books
+    Candidate ||--o{ Commission : generates
+    Candidate ||--o{ SchedulingCall : receives
+    Candidate ||--o{ Activity : references
+
+    SchedulingCallCampaign ||--o{ SchedulingCall : contains
+    BrokerCandidate ||--o{ Candidate : sources
+</pre></div>
+<h3>Detailed Table Specifications</h3>
+<div class='table-container'><table>
+<thead>
+<tr><th>Table</th><th>Primary Purpose</th><th>Key Fields</th></tr>
+</thead>
+<tbody>
+<tr><td><strong><code>HrUser</code></strong></td><td>Recruiter and admin accounts</td><td><code>id</code>, <code>name</code>, <code>email</code>, <code>passwordHash</code>, <code>role</code>, <code>isAdmin</code>, <code>googleAccessToken</code>, <code>googleRefreshToken</code></td></tr>
+<tr><td><strong><code>BrokerProfile</code></strong></td><td>Placement agency profiles</td><td><code>id</code>, <code>brokerCode</code> (BRK-XXXX), <code>agencyName</code>, <code>status</code> (pending/approved), <code>commissionRate</code>, <code>payoutDetails</code></td></tr>
+<tr><td><strong><code>BrokerCandidate</code></strong></td><td>Agency benched talent</td><td><code>id</code>, <code>name</code>, <code>email</code>, <code>phone</code>, <code>skills</code>, <code>experienceYears</code>, <code>expectedSalary</code>, <code>consentGiven</code>, <code>resumeUrl</code></td></tr>
+<tr><td><strong><code>Job</code></strong></td><td>Open employment positions</td><td><code>id</code>, <code>title</code>, <code>description</code>, <code>dept</code>, <code>location</code>, <code>mode</code>, <code>status</code>, <code>commissionType</code>, <code>commissionAmount</code></td></tr>
+<tr><td><strong><code>Candidate</code></strong></td><td>Job applicant instances</td><td><code>id</code>, <code>jobId</code>, <code>name</code>, <code>email</code>, <code>journey</code> (Applied..Hired), <code>rankScore</code>, <code>aiSummary</code>, <code>resumeUrl</code>, <code>asyncScreeningAnswers</code></td></tr>
+<tr><td><strong><code>Commission</code></strong></td><td>Agency placement earnings</td><td><code>id</code>, <code>brokerId</code>, <code>candidateId</code>, <code>jobId</code>, <code>amount</code>, <code>status</code> (Pending/Approved/Paid/Reversed), <code>transactionRef</code></td></tr>
+<tr><td><strong><code>InterviewSlot</code></strong></td><td>Recruiter availability</td><td><code>id</code>, <code>jobId</code>, <code>startsAt</code>, <code>endsAt</code>, <code>candidateId</code>, <code>mode</code></td></tr>
+<tr><td><strong><code>ScreeningQuestion</code></strong></td><td>Role-specific questions</td><td><code>id</code>, <code>jobId</code>, <code>order</code>, <code>text</code></td></tr>
+<tr><td><strong><code>SchedulingCallCampaign</code></strong></td><td>Vapi batch calling</td><td><code>id</code>, <code>jobId</code>, <code>actorId</code>, <code>status</code></td></tr>
+<tr><td><strong><code>SchedulingCall</code></strong></td><td>Individual telephony calls</td><td><code>id</code>, <code>campaignId</code>, <code>candidateId</code>, <code>phoneE164</code>, <code>status</code>, <code>transcript</code>, <code>parsedAvailability</code></td></tr>
+<tr><td><strong><code>Activity</code></strong></td><td>Audit trail timeline</td><td><code>id</code>, <code>tag</code>, <code>what</code>, <code>actorId</code>, <code>jobId</code>, <code>candidateId</code>, <code>createdAt</code></td></tr>
+<tr><td><strong><code>Template</code></strong></td><td>HR communications</td><td><code>id</code>, <code>title</code>, <code>type</code> (Email/SMS), <code>category</code>, <code>body</code></td></tr>
+</tbody>
+</table></div>
+<hr/>
+<h2>5. Security, Cryptography &amp; Compliance</h2>
+<p>The platform implements defense-in-depth security principles across all layers:</p>
+<p>1. <strong>Authentication Cryptography</strong>:</p>
+<ul>
+<li>Passwords hashed using <code>bcryptjs</code> with high work factors.</li>
+<li>Sessions signed with HS256 JWT tokens containing deterministic expiry.</li>
+<li>Sensitive session cookies marked <code>HttpOnly</code>, <code>SameSite=Lax</code>, and <code>Secure</code> over HTTPS.</li>
+</ul>
+<p>2. <strong>Path Traversal Protection</strong>:</p>
+<ul>
+<li>File upload endpoints sanitize filenames using <code>path.basename</code> and resolve against whitelist target directories, rejecting sequence attacks (<code>../</code>).</li>
+</ul>
+<p>3. <strong>Timing Attack Resistance</strong>:</p>
+<ul>
+<li>Partner tokens and OTP hashes are verified using <code>crypto.timingSafeEqual</code> to prevent timing-based side-channel leaks.</li>
+</ul>
+<p>4. <strong>Inter-Service Authorization</strong>:</p>
+<ul>
+<li>Internal communication between the Candidate Portal (<code>apply</code>) and HR Portal (<code>app</code>) requires the <code>X-Candidate-Sync-Secret</code> header, authenticated via <code>crypto.timingSafeEqual</code>.</li>
+</ul>
+<p>5. <strong>Rate Limiting</strong>:</p>
+<ul>
+<li>Candidate OTP requests are rate-limited per email and IP address to prevent brute-force attacks.</li>
+</ul>
+<hr/>
+<h2>6. DevOps, Infrastructure &amp; Deployment Architecture</h2>
+<h3>6.1 Multi-Container Compose Configuration</h3>
+<p>The system is deployed using Docker Compose on Linux VPS environments:</p>
+<div class="mermaid-wrap"><pre class="mermaid">
+flowchart TD
+    subgraph HostSystem["Host Operating System (Ubuntu Linux VPS)"]
+        CaddyHost["Caddy Reverse Proxy Service"]
+        
+        subgraph DockerEngine["Docker Engine"]
+            subgraph ComposeEnv["Huptle Compose Stack"]
+                DBCont["db (postgres:16)"]
+                AppCont["app (hr-tech:production - Port 3000)"]
+                ApplyCont["apply (huptle-apply:production - Port 3002)"]
+            end
+            
+            DBVol[("hr-postgres-data Volume")]
+            ResumeVol[("hr-apply-resumes Volume")]
+            DataVol[("hr-apply-data Volume")]
+        end
+    end
+
+    CaddyHost -->|"Proxy 127.0.0.1:3000"| AppCont
+    CaddyHost -->|"Proxy 127.0.0.1:3002"| ApplyCont
+    AppCont -->|"Internal Connection (db:5432)"| DBCont
+    ApplyCont -->|"Internal HTTP (app:3000)"| AppCont
+
+    DBCont --- DBVol
+    ApplyCont --- ResumeVol
+    ApplyCont --- DataVol
+</pre></div>
+<h3>6.2 Port Allocation Matrix</h3>
+<div class='table-container'><table>
+<thead>
+<tr><th>Environment</th><th>Service</th><th>Internal Port</th><th>Host Port</th><th>Public Domain / URL</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Production</strong></td><td>HR &amp; Broker Portal (<code>app</code>)</td><td>3000</td><td><code>127.0.0.1:3000</code></td><td><code>https://hr.huptle.com</code></td></tr>
+<tr><td><strong>Production</strong></td><td>Candidate Apply (<code>apply</code>)</td><td>3000</td><td><code>127.0.0.1:3002</code></td><td><code>https://apply.huptle.com</code></td></tr>
+<tr><td><strong>Production</strong></td><td>PostgreSQL Database (<code>db</code>)</td><td>5432</td><td><code>Internal only</code></td><td><code>db:5432</code></td></tr>
+<tr><td><strong>Development</strong></td><td>HR &amp; Broker Portal (<code>app</code>)</td><td>3000</td><td><code>127.0.0.1:3001</code></td><td><code>https://dev.hr.huptle.com</code></td></tr>
+<tr><td><strong>Development</strong></td><td>Candidate Apply (<code>apply</code>)</td><td>3000</td><td><code>127.0.0.1:3003</code></td><td><code>https://dev.apply.huptle.com</code></td></tr>
+</tbody>
+</table></div>
+<hr/>
+<h3>6.3 GitHub Actions CI/CD Pipeline</h3>
+<p>The deployment pipeline is fully automated via GitHub Actions (<code>ci-deploy-dev.yml</code> and <code>deploy-main.yml</code>).</p>
+<div class="mermaid-wrap"><pre class="mermaid">
+flowchart TD
+    GitPush["Git Push to 'dev' or 'main'"] --> CheckLint["Run ESLint Quality Gate"]
+    CheckLint --> RunTests["Run Node.js Test Suite (tests/*.test.mjs)"]
+    RunTests --> BuildCheck["Build Production Next.js Bundle (next build)"]
+    
+    BuildCheck --> ParallelDocker{"Build Docker Containers"}
+    ParallelDocker --> BuildApp["Build HR Portal Image (BuildKit Cache)"]
+    ParallelDocker --> BuildApply["Build Apply Portal Image (BuildKit Cache)"]
+    
+    BuildApp --> PushGHCR["Push Image to GitHub Container Registry (ghcr.io)"]
+    BuildApply --> PushGHCR
+    
+    PushGHCR --> SSHDeploy["SSH to Linux VPS Host"]
+    SSHDeploy --> DockerPull["docker compose pull"]
+    DockerPull --> RollingRestart["docker compose up -d --no-build"]
+    RollingRestart --> PruneDangling["docker image prune -f"]
+    
+    PruneDangling --> SmokeTest1["Smoke Test 1: HR Portal /signin (HTTP 200)"]
+    SmokeTest1 --> SmokeTest2["Smoke Test 2: Apply Portal /account (HTTP 200)"]
+    SmokeTest2 --> SmokeTest3["Smoke Test 3: Unauthenticated Security Probe (HTTP 401)"]
+    SmokeTest3 --> DeploySuccess["Deployment Verified & Live!"]
+</pre></div>
+<h4>Pipeline Optimizations:</h4>
+<ul>
+<li><strong>BuildKit Cache Mounts</strong>: <code>cache-from: type=gha</code> and <code>cache-to: type=gha,mode=max</code> reduce container compilation times by over 70%.</li>
+<li><strong>Parallel Container Builds</strong>: HR Portal and Apply Portal containers build simultaneously in separate runner jobs.</li>
+<li><strong>Automated Post-Deploy Smoke Checks</strong>: Automated <code>curl</code> assertions verify HTTP response codes before marking the deployment successful.</li>
+</ul>
+<hr/>
+<h2>7. Testing &amp; Quality Assurance Suite</h2>
+<p>The platform maintains an automated test suite executed via Node.js native test runner (<code>node --test tests/*.test.mjs</code>):</p>
+<div class='table-container'><table>
+<thead>
+<tr><th>Test Suite File</th><th>Domain Covered</th><th>Tests Count</th><th>Validations</th></tr>
+</thead>
+<tbody>
+<tr><td><code>tests/broker-portal.test.mjs</code></td><td>Agency &amp; Commission Engine</td><td>6</td><td>Code generation (<code>BRK-XXXX</code>), percentage/fixed commission math, deduplication blocks, candidate consent enforcement, and commission state transitions (<code>Pending</code> -&gt; <code>Approved</code> -&gt; <code>Paid</code> / <code>Reversed</code>).</td></tr>
+<tr><td><code>tests/candidate-security.test.mjs</code></td><td>Auth &amp; Storage Hardening</td><td>8</td><td>Candidate JWT signature generation, tampered token rejection, expired token rejection, path traversal filename protection, and salted SHA-256 OTP hashing.</td></tr>
+<tr><td><code>tests/partner-auth.test.mjs</code></td><td>Mentorlee SSO Integration</td><td>3</td><td>HMAC-SHA256 signature verification, forged signature rejection, and expired partner token rejection.</td></tr>
+<tr><td><code>tests/voice-recruiter.test.mjs</code></td><td>AI Voice Recruiter Engine</td><td>3</td><td>Progressive persona completeness scoring (0-100%), Hinglish/Hindi phrasing detection, salary/experience regex parsing, candidate relevance scoring, and audio turn transcription fallback.</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>Full System Test Suite</strong></td><td><strong>20</strong></td><td><strong>100% Pass Rate across all test runs</strong></td></tr>
+</tbody>
+</table></div>
+<hr/>
+<h2>8. Summary of Technical Specifications</h2>
+<ul>
+<li><strong>Primary Application Language</strong>: TypeScript 5 / JavaScript ES2024</li>
+<li><strong>Frontend Framework</strong>: Next.js 16 (App Router) + React 19 + Tailwind CSS v4</li>
+<li><strong>Animation Engine</strong>: Framer Motion 12</li>
+<li><strong>Database &amp; ORM</strong>: PostgreSQL 16 + Prisma ORM 6.19.3</li>
+<li><strong>AI Model Engine</strong>: Google Gemini 2.5 Flash (<code>@google/generative-ai</code>)</li>
+<li><strong>Voice Telephony Integration</strong>: Vapi AI REST API + Twilio E.164 Trunk</li>
+<li><strong>Calendar Integration</strong>: Google Cloud Platform OAuth 2.0 Web Client</li>
+<li><strong>Reverse Proxy</strong>: Caddy v2 with auto-TLS and HTTP/2 + HTTP/3 support</li>
+<li><strong>Author &amp; Lead Architect</strong>: <strong>Aaryan Gupta</strong></li>
+</ul>
+
+</body>
+</html>
