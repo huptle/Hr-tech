@@ -121,7 +121,6 @@ function mdToHtml(markdown) {
         <div class="author-card">
           <div class="author-label">CREATED BY</div>
           <div class="author-name">Aaryan Gupta</div>
-          <div class="author-role">Lead System Architect & Developer</div>
         </div>
 
         <div class="cover-meta">
@@ -277,12 +276,6 @@ const fullHtml = `<!DOCTYPE html>
       font-weight: 900;
       color: #1e1b4b;
       letter-spacing: -0.01em;
-    }
-    .author-role {
-      font-size: 10pt;
-      font-weight: 600;
-      color: #64748b;
-      margin-top: 2px;
     }
     .cover-meta {
       margin-top: 28px;
