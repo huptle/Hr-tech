@@ -415,4 +415,4 @@ The platform maintains an automated test suite executed via Node.js native test 
 * **Voice Telephony Integration**: Vapi AI REST API + Twilio E.164 Trunk
 * **Calendar Integration**: Google Cloud Platform OAuth 2.0 Web Client
 * **Reverse Proxy**: Caddy v2 with auto-TLS and HTTP/2 + HTTP/3 support
-* **Author & Lead Architect**: **Aaryan Gupta**
+* **Created by**: **Aaryan Gupta**
